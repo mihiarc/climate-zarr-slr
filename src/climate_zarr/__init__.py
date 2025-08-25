@@ -19,7 +19,7 @@ from climate_zarr.climate_config import (
     ProcessingConfig,
     get_config,
 )
-from climate_zarr.stack_nc_to_zarr import stack_netcdf_to_zarr
+from climate_zarr.stack_nc_to_zarr import stack_netcdf_to_zarr, stack_netcdf_to_zarr_hierarchical, generate_hierarchical_zarr_path
 from climate_zarr.county_processor import ModernCountyProcessor
 
 __all__ = [
@@ -36,5 +36,7 @@ __all__ = [
     "get_config",
     # Core functions
     "stack_netcdf_to_zarr",
+    "stack_netcdf_to_zarr_hierarchical", 
+    "generate_hierarchical_zarr_path",
     "ModernCountyProcessor",
 ]

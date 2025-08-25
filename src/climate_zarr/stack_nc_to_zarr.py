@@ -13,6 +13,43 @@ import numcodecs
 console = Console()
 
 
+def generate_hierarchical_zarr_path(
+    base_dir: Path,
+    variable: str, 
+    region: str,
+    scenario: str = "historical",
+    include_daily_suffix: bool = None
+) -> Path:
+    """Generate hierarchical Zarr path following the pattern:
+    {base_dir}/{variable}/{region}/{scenario}/{region}_{scenario}_{variable}[_daily].zarr
+    
+    Args:
+        base_dir: Base directory for zarr outputs (e.g., climate_outputs/zarr)
+        variable: Climate variable (pr, tas, tasmax, tasmin)
+        region: Region name (conus, alaska, hawaii, etc.)
+        scenario: Scenario name (historical, ssp370, etc.)
+        include_daily_suffix: Whether to include '_daily' suffix. If None, auto-decide based on scenario.
+        
+    Returns:
+        Path object for the hierarchical zarr location
+    """
+    # Auto-decide daily suffix: historical = no suffix, future scenarios = daily suffix
+    if include_daily_suffix is None:
+        include_daily_suffix = scenario != "historical"
+    
+    # Build filename
+    filename_parts = [region, scenario, variable]
+    if include_daily_suffix:
+        filename_parts.append("daily")
+    
+    filename = "_".join(filename_parts) + ".zarr"
+    
+    # Build hierarchical path
+    path = base_dir / variable / region / scenario / filename
+    
+    return path
+
+
 # Import modern configuration
 try:
     from climate_zarr.climate_config import get_config
@@ -194,6 +231,85 @@ def stack_netcdf_to_zarr(
     console.print(f"Output: {zarr_path}")
     if clip_region:
         console.print(f"[yellow]Data clipped to {clip_region.upper()} region[/yellow]")
+
+
+def stack_netcdf_to_zarr_hierarchical(
+    nc_files: List[Path],
+    variable: str,
+    region: str,
+    scenario: str = "historical",
+    base_zarr_dir: Path = None,
+    concat_dim: str = "time",
+    chunks: Optional[dict] = None,
+    compression: str = "default",
+    compression_level: int = 5,
+    include_daily_suffix: bool = None,
+    log_conversion: bool = False
+) -> Path:
+    """Stack NetCDF files using hierarchical output path structure.
+    
+    This function generates a standardized hierarchical path and calls the main
+    stack_netcdf_to_zarr function.
+    
+    Args:
+        nc_files: List of NetCDF files to stack
+        variable: Climate variable name (pr, tas, tasmax, tasmin)
+        region: Region name (conus, alaska, hawaii, etc.)
+        scenario: Scenario name (historical, ssp370, etc.)
+        base_zarr_dir: Base directory for zarr outputs (defaults to climate_outputs/zarr)
+        concat_dim: Dimension to concatenate along
+        chunks: Chunking configuration
+        compression: Compression algorithm
+        compression_level: Compression level (1-9)
+        include_daily_suffix: Whether to include '_daily' suffix
+        log_conversion: Whether to log conversion details to logs directory
+        
+    Returns:
+        Path to the created zarr store
+    """
+    # Set default base directory
+    if base_zarr_dir is None:
+        base_zarr_dir = Path("climate_outputs/zarr")
+    
+    # Generate hierarchical path
+    zarr_path = generate_hierarchical_zarr_path(
+        base_dir=base_zarr_dir,
+        variable=variable,
+        region=region,
+        scenario=scenario,
+        include_daily_suffix=include_daily_suffix
+    )
+    
+    console.print(f"[cyan]📁 Output path: {zarr_path}[/cyan]")
+    
+    # Optionally create log file
+    log_path = None
+    if log_conversion:
+        logs_dir = Path("climate_outputs/logs")
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        log_filename = f"{variable}_{region}_{scenario}_conversion.log"
+        log_path = logs_dir / log_filename
+        console.print(f"[dim]📝 Logging conversion to: {log_path}[/dim]")
+    
+    # Call the main stacking function
+    stack_netcdf_to_zarr(
+        nc_files=nc_files,
+        zarr_path=zarr_path,
+        concat_dim=concat_dim,
+        chunks=chunks,
+        compression=compression,
+        compression_level=compression_level,
+        clip_region=region
+    )
+    
+    # Log completion if logging enabled
+    if log_conversion and log_path:
+        with open(log_path, 'a') as f:
+            from datetime import datetime
+            timestamp = datetime.now().isoformat()
+            f.write(f"{timestamp}: Successfully converted {len(nc_files)} files to {zarr_path}\n")
+    
+    return zarr_path
 
 
 def main():

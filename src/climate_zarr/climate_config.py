@@ -173,6 +173,18 @@ class OutputConfig(BaseModel):
         
         return filename
     
+    def get_logs_directory(self) -> Path:
+        """Get the logs directory path."""
+        return self.base_output_dir / "logs"
+    
+    def get_reports_directory(self) -> Path:
+        """Get the reports directory path."""
+        return self.base_output_dir / "reports"
+    
+    def get_temp_directory(self) -> Path:
+        """Get the temp directory path."""
+        return self.base_output_dir / "temp"
+    
     def get_full_output_path(self,
                            variable: str,
                            region: str,
@@ -276,6 +288,12 @@ class ClimateConfig(BaseModel):
         """Create necessary directories."""
         self.default_output_dir.mkdir(parents=True, exist_ok=True)
         self.output.base_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create standard subdirectories
+        (self.output.base_output_dir / "logs").mkdir(parents=True, exist_ok=True)
+        (self.output.base_output_dir / "reports").mkdir(parents=True, exist_ok=True)
+        (self.output.base_output_dir / "temp").mkdir(parents=True, exist_ok=True)
+        
         if self.temp_dir:
             self.temp_dir.mkdir(parents=True, exist_ok=True)
         if self.cache_dir:

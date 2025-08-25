@@ -35,7 +35,7 @@ from typing_extensions import Annotated
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 # Import our existing modules
-from climate_zarr.stack_nc_to_zarr import stack_netcdf_to_zarr
+from climate_zarr.stack_nc_to_zarr import stack_netcdf_to_zarr, stack_netcdf_to_zarr_hierarchical
 from climate_zarr.county_processor import ModernCountyProcessor
 from climate_zarr.utils.output_utils import get_output_manager
 from climate_zarr.climate_config import get_config
@@ -652,23 +652,6 @@ def interactive_wizard():
             console.print(f"[yellow]📝 Manual selection: {', '.join(missing_vars).upper()}[/yellow]")
         console.print(f"[bold green]✅ Total: {len(nc_files)} NetCDF files ready for conversion[/bold green]")
         
-        # Generate output path based on region and variable (region always present)
-        if len(variables_to_process) == 1:
-            # Single variable with region
-            suggested_output = Path(f"{variables_to_process[0]}_historical_{region}.zarr")
-        else:
-            # Multiple variables with region
-            suggested_output = Path(f"climate_historical_{region}.zarr")
-        
-        output_path = Path(questionary.text(
-            "📁 Output Zarr file name:",
-            default=str(suggested_output)
-        ).ask())
-        
-        # Show full absolute path for user convenience
-        full_output_path = output_path.resolve()
-        console.print(f"[cyan]📍 Full output path: {full_output_path}[/cyan]")
-        
         # Use recommended compression by default
         compression = "zstd"
         console.print("[green]🗜️ Using ZSTD compression (recommended - fast & efficient)[/green]")
@@ -678,7 +661,7 @@ def interactive_wizard():
         conversion_details = {
             "Input Files": f"{len(nc_files)} NetCDF files",
             "Variables": variables_display,
-            "Output Path": str(full_output_path),
+            "Output Structure": "Hierarchical (climate_outputs/zarr/{variable}/{region}/historical/)",
             "Region": region.upper(),
             "Compression": compression,
         }
@@ -687,25 +670,48 @@ def interactive_wizard():
             console.print("[yellow]❌ Operation cancelled by user[/yellow]")
             return
         
-        # Perform conversion
+        # Perform conversion - create separate zarr files for each variable
         try:
-            console.print(f"\n[blue]🔄 Converting {variables_display} NetCDF files to Zarr...[/blue]")
+            console.print(f"\n[blue]🔄 Converting {variables_display} NetCDF files to hierarchical Zarr format...[/blue]")
             
-            stack_netcdf_to_zarr(
-                nc_files=nc_files,
-                zarr_path=output_path,
-                concat_dim="time",
-                chunks=None,
-                compression=compression.split()[0],  # Extract algorithm name
-                compression_level=5,
-                clip_region=region
-            )
+            created_zarr_paths = []
             
+            # Group files by variable
+            files_by_variable = {}
+            for variable in variables_to_process:
+                variable_files = [f for f in nc_files if variable in str(f).lower()]
+                if variable_files:
+                    files_by_variable[variable] = variable_files
+            
+            # Convert each variable separately
+            for variable, variable_files in files_by_variable.items():
+                console.print(f"\n[cyan]📦 Processing {variable.upper()} ({len(variable_files)} files)...[/cyan]")
+                
+                # Use hierarchical conversion
+                zarr_path = stack_netcdf_to_zarr_hierarchical(
+                    nc_files=variable_files,
+                    variable=variable,
+                    region=region,
+                    scenario="historical",
+                    concat_dim="time",
+                    chunks=None,
+                    compression=compression,
+                    compression_level=5
+                )
+                
+                created_zarr_paths.append(zarr_path)
+                console.print(f"[green]✅ {variable.upper()} complete: {zarr_path}[/green]")
+            
+            # Show summary of created files
             console.print(Panel(
-                f"[green]✅ Successfully created Zarr store:[/green]\n"
-                f"[bold white]{full_output_path}[/bold white]",
+                f"[green]✅ Successfully created {len(created_zarr_paths)} hierarchical Zarr stores:[/green]\n" +
+                "\n".join([f"📁 {path}" for path in created_zarr_paths]),
                 border_style="green"
             ))
+            
+            # Set output_path for pipeline mode (use first created path as representative)
+            if created_zarr_paths:
+                output_path = created_zarr_paths[0]
             
         except Exception as e:
             console.print(f"[red]❌ Error during conversion: {e}[/red]")
@@ -789,8 +795,8 @@ def interactive_wizard():
                 
                 # Find or verify zarr path for this variable
                 if operation == "stats":
-                    # Auto-find zarr path for stats-only mode
-                    expected_zarr = Path(f"climate_outputs/zarr/{variable}_historical_{stats_region}.zarr")
+                    # Auto-find zarr path for stats-only mode using hierarchical structure
+                    expected_zarr = Path(f"climate_outputs/zarr/{variable}/{stats_region}/historical/{stats_region}_historical_{variable}.zarr")
                     if expected_zarr.exists():
                         current_zarr_path = expected_zarr
                         console.print(f"[green]✅ Found Zarr: {current_zarr_path}[/green]")
@@ -798,8 +804,18 @@ def interactive_wizard():
                         console.print(f"[yellow]⚠️ Skipping {variable}: Zarr not found at {expected_zarr}[/yellow]")
                         continue
                 else:
-                    # Pipeline mode - use converted zarr
-                    current_zarr_path = zarr_path
+                    # Pipeline mode - find the zarr for this specific variable from created paths
+                    variable_zarr = None
+                    for created_path in created_zarr_paths:
+                        if f"/{variable}/" in str(created_path) and f"_{variable}.zarr" in str(created_path):
+                            variable_zarr = created_path
+                            break
+                    
+                    if variable_zarr:
+                        current_zarr_path = variable_zarr
+                    else:
+                        console.print(f"[yellow]⚠️ Skipping {variable}: Could not find corresponding zarr file[/yellow]")
+                        continue
                 
                 # Get default threshold for this variable
                 if variable == "pr":
