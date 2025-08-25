@@ -82,12 +82,14 @@ def interactive_variable_selection() -> str:
     }
     
     choices = [
+        questionary.Choice(title="🌟 All Variables - process all climate variables", value="all")
+    ] + [
         questionary.Choice(title=description, value=var)
         for var, description in variables.items()
     ]
     
     return questionary.select(
-        "🔬 Select climate variable to analyze:",
+        "🔬 Select climate variable(s) to analyze:",
         choices=choices,
         style=questionary.Style([
             ('question', 'bold blue'),
@@ -203,7 +205,6 @@ def get_shapefile_for_region(region: str) -> Path:
         'hawaii': 'hawaii_counties.shp',
         'guam': 'guam_counties.shp',
         'puerto_rico': 'puerto_rico_counties.shp',
-        'pr_vi': 'puerto_rico_counties.shp',
         'other': 'other_counties.shp'
     }
     
@@ -562,60 +563,123 @@ def interactive_wizard():
         info()
         return
     
-    # Step 2: File selection
-    console.print("\n[bold blue]📁 Step 1: Select your data[/bold blue]")
-    input_path = interactive_file_selection()
-    
-    if not input_path.exists():
-        console.print(f"[red]❌ Path does not exist: {input_path}[/red]")
-        return
-    
-    # Collect NetCDF files
+    # Step 2: Configure conversion settings (improved UX flow)
     nc_files = []
-    if input_path.is_dir():
-        nc_files = list(input_path.glob("*.nc"))
-    elif input_path.is_file() and input_path.suffix == '.nc':
-        nc_files = [input_path]
-    
-    if not nc_files:
-        console.print(f"[red]❌ No NetCDF files found in: {input_path}[/red]")
-        return
-    
-    console.print(f"[green]✅ Found {len(nc_files)} NetCDF files[/green]")
-    
     if operation in ["convert", "pipeline"]:
-        # Step 3: Conversion settings
-        console.print("\n[bold blue]🗜️ Step 2: Configure Zarr conversion[/bold blue]")
+        console.print("\n[bold blue]🗜️ Step 1: Configure Zarr conversion[/bold blue]")
         
-        # Output path
-        suggested_output = Path(f"{input_path.stem}_climate.zarr" if input_path.is_file() else "climate_data.zarr")
+        # Region selection (always required)
+        region = interactive_region_selection()
+        
+        # Variable selection
+        variable_selection = interactive_variable_selection()
+        
+        # Determine which variables to process
+        all_variables = ['pr', 'tas', 'tasmax', 'tasmin']
+        if variable_selection == "all":
+            variables_to_process = all_variables
+            console.print(f"[cyan]📊 Will convert all variables: {', '.join(variables_to_process)}[/cyan]")
+        else:
+            variables_to_process = [variable_selection]
+        
+        # Auto-detect NetCDF files based on variable selection
+        console.print(f"\n[bold blue]📁 Step 2: Auto-detecting NetCDF data for {', '.join(variables_to_process)}[/bold blue]")
+        
+        nc_files = []
+        auto_detected_vars = []
+        missing_vars = []
+        
+        # Try to auto-detect files for each variable
+        for variable in variables_to_process:
+            # Common patterns to check
+            possible_paths = [
+                Path(f"data/{variable}/historical/"),
+                Path(f"data/{variable}/"),
+                Path("data/"),
+            ]
+            
+            found_files = []
+            for data_path in possible_paths:
+                if data_path.exists():
+                    # Look for files matching the variable
+                    pattern_files = list(data_path.glob(f"{variable}_*.nc"))
+                    if pattern_files:
+                        found_files.extend(pattern_files)
+                        break
+                    # Also try generic pattern in case files don't start with variable name
+                    pattern_files = list(data_path.glob("*.nc"))
+                    if pattern_files and variable in str(pattern_files[0]).lower():
+                        found_files.extend([f for f in pattern_files if variable in str(f).lower()])
+                        break
+            
+            if found_files:
+                nc_files.extend(found_files)
+                auto_detected_vars.append(variable)
+                console.print(f"[green]✅ Found {len(found_files)} files for {variable.upper()}: {found_files[0].parent}[/green]")
+            else:
+                missing_vars.append(variable)
+                console.print(f"[yellow]⚠️ No files found for {variable.upper()}[/yellow]")
+        
+        # Handle missing variables
+        if missing_vars:
+            console.print(f"\n[yellow]📁 Manual selection needed for: {', '.join(missing_vars)}[/yellow]")
+            manual_path = interactive_file_selection()
+            
+            if manual_path.exists():
+                if manual_path.is_dir():
+                    manual_files = list(manual_path.glob("*.nc"))
+                elif manual_path.is_file() and manual_path.suffix == '.nc':
+                    manual_files = [manual_path]
+                else:
+                    manual_files = []
+                
+                if manual_files:
+                    nc_files.extend(manual_files)
+                    console.print(f"[green]✅ Added {len(manual_files)} manual files[/green]")
+        
+        if not nc_files:
+            console.print("[red]❌ No NetCDF files found. Please check your data directory structure.[/red]")
+            console.print("[dim]Expected structure: data/{variable}/historical/{variable}_*.nc[/dim]")
+            return
+        
+        # Remove duplicates while preserving order
+        nc_files = list(dict.fromkeys(nc_files))
+        
+        # Show auto-detection summary
+        if auto_detected_vars:
+            console.print(f"\n[bold green]🎯 Auto-detected: {', '.join(auto_detected_vars).upper()}[/bold green]")
+        if missing_vars:
+            console.print(f"[yellow]📝 Manual selection: {', '.join(missing_vars).upper()}[/yellow]")
+        console.print(f"[bold green]✅ Total: {len(nc_files)} NetCDF files ready for conversion[/bold green]")
+        
+        # Generate output path based on region and variable (region always present)
+        if len(variables_to_process) == 1:
+            # Single variable with region
+            suggested_output = Path(f"{variables_to_process[0]}_historical_{region}.zarr")
+        else:
+            # Multiple variables with region
+            suggested_output = Path(f"climate_historical_{region}.zarr")
+        
         output_path = Path(questionary.text(
             "📁 Output Zarr file name:",
             default=str(suggested_output)
         ).ask())
         
-        # Region selection
-        use_region = questionary.confirm("🗺️ Clip data to a specific region?", default=True).ask()
-        region = None
-        if use_region:
-            region = interactive_region_selection()
+        # Show full absolute path for user convenience
+        full_output_path = output_path.resolve()
+        console.print(f"[cyan]📍 Full output path: {full_output_path}[/cyan]")
         
-        # Compression
-        compression = questionary.select(
-            "🗜️ Choose compression algorithm:",
-            choices=[
-                questionary.Choice("🚀 ZSTD (recommended - fast & efficient)", "zstd"),
-                questionary.Choice("📦 Default (Blosc)", "default"), 
-                questionary.Choice("🔧 ZLIB (compatible)", "zlib"),
-                questionary.Choice("📄 GZIP (universal)", "gzip"),
-            ]
-        ).ask()
+        # Use recommended compression by default
+        compression = "zstd"
+        console.print("[green]🗜️ Using ZSTD compression (recommended - fast & efficient)[/green]")
         
         # Confirm conversion
+        variables_display = "All Variables" if variable_selection == "all" else variable_selection.upper()
         conversion_details = {
             "Input Files": f"{len(nc_files)} NetCDF files",
-            "Output": str(output_path),
-            "Region": region.upper() if region else "Global (no clipping)",
+            "Variables": variables_display,
+            "Output Path": str(full_output_path),
+            "Region": region.upper(),
             "Compression": compression,
         }
         
@@ -625,7 +689,7 @@ def interactive_wizard():
         
         # Perform conversion
         try:
-            console.print("\n[blue]🔄 Converting NetCDF files to Zarr...[/blue]")
+            console.print(f"\n[blue]🔄 Converting {variables_display} NetCDF files to Zarr...[/blue]")
             
             stack_netcdf_to_zarr(
                 nc_files=nc_files,
@@ -638,7 +702,8 @@ def interactive_wizard():
             )
             
             console.print(Panel(
-                f"[green]✅ Successfully created Zarr store: {output_path}[/green]",
+                f"[green]✅ Successfully created Zarr store:[/green]\n"
+                f"[bold white]{full_output_path}[/bold white]",
                 border_style="green"
             ))
             
@@ -647,52 +712,35 @@ def interactive_wizard():
             return
     
     if operation in ["stats", "pipeline"]:
-        # Step 4: Statistics configuration
-        console.print("\n[bold blue]📈 Step 3: Configure county statistics[/bold blue]")
+        # Step 3 or 4: Statistics configuration (depending on whether conversion was done)
+        step_num = "Step 1" if operation == "stats" else "Step 3"
+        console.print(f"\n[bold blue]📈 {step_num}: Configure county statistics[/bold blue]")
         
-        # Use existing zarr or ask for path
+        # For stats-only operation, ask for region and variable
+        # For pipeline mode, reuse selections from conversion step
         if operation == "stats":
-            zarr_path = Path(questionary.path("📁 Path to Zarr dataset:").ask())
-            if not zarr_path.exists():
-                console.print(f"[red]❌ Zarr dataset not found: {zarr_path}[/red]")
-                return
+            # Region for statistics
+            stats_region = interactive_region_selection()
+            
+            # Variable selection
+            variable_selection = interactive_variable_selection()
+            
+            # Determine which variables to process
+            all_variables = ['pr', 'tas', 'tasmax', 'tasmin']
+            if variable_selection == "all":
+                variables_to_process = all_variables
+                console.print(f"[cyan]📊 Will process all variables: {', '.join(variables_to_process)}[/cyan]")
+            else:
+                variables_to_process = [variable_selection]
         else:
+            # Pipeline mode: reuse region and variable selections from conversion
+            stats_region = region
+            # variables_to_process and variable_selection already set from conversion step
+            console.print(f"[cyan]📊 Processing statistics for: {', '.join(variables_to_process)}[/cyan]")
+        
+        # For pipeline mode, we already have the zarr_path
+        if operation != "stats":
             zarr_path = output_path
-        
-        # Region for statistics
-        stats_region = interactive_region_selection()
-        
-        # Variable selection
-        variable = interactive_variable_selection()
-        
-        # Threshold configuration
-        if variable == "pr":
-            threshold = questionary.text(
-                "🌧️ Precipitation threshold (mm/day):",
-                default="25.4",
-                validate=lambda x: x.replace('.', '').isdigit()
-            ).ask()
-        elif variable in ["tasmax", "tasmin"]:
-            threshold = questionary.text(
-                f"🌡️ Temperature threshold (°C):",
-                default="32" if variable == "tasmax" else "0",
-                validate=lambda x: x.replace('.', '').replace('-', '').isdigit()
-            ).ask()
-        else:
-            threshold = "0"
-        
-        # Output file using standardized naming
-        output_manager = get_output_manager()
-        suggested_output = output_manager.get_output_path(
-            variable=variable,
-            region=stats_region,
-            scenario="historical",
-            threshold=float(threshold)
-        )
-        output_csv = Path(questionary.text(
-            "📊 Output CSV file name:",
-            default=str(suggested_output)
-        ).ask())
         
         # Performance settings
         workers = questionary.select(
@@ -701,20 +749,16 @@ def interactive_wizard():
             default="4"
         ).ask()
         
-        use_distributed = questionary.confirm(
-            "🚀 Use distributed processing? (for very large datasets)",
-            default=False
-        ).ask()
+        # Note: Distributed processing not currently implemented in ModernCountyProcessor
+        use_distributed = False
         
         # Confirm statistics calculation
+        variables_display = "All Variables" if variable_selection == "all" else variable_selection.upper()
         stats_details = {
-            "Zarr Dataset": str(zarr_path),
             "Region": stats_region.upper(),
-            "Variable": variable.upper(),
-            "Threshold": f"{threshold} {'mm' if variable == 'pr' else '°C'}",
+            "Variables": variables_display,
             "Workers": workers,
             "Processing": "Distributed" if use_distributed else "Multiprocessing",
-            "Output": str(output_csv),
         }
         
         if not confirm_operation("calculate county statistics", stats_details):
@@ -728,67 +772,125 @@ def interactive_wizard():
             
             # Create processor
             processor = ModernCountyProcessor(
-                n_workers=int(workers),
-                memory_limit="4GB",
-                use_distributed=use_distributed
+                n_workers=int(workers)
             )
             
-            # Load shapefile
+            # Load shapefile once
             console.print("[blue]📍 Loading county boundaries...[/blue]")
             gdf = processor.prepare_shapefile(shapefile_path)
             
-            # Process data
-            console.print(f"[blue]🔄 Processing {variable.upper()} data for {len(gdf)} counties...[/blue]")
-            results_df = processor.process_zarr_data(
-                zarr_path=zarr_path,
-                gdf=gdf,
-                scenario="historical",
-                variable=variable,
-                threshold_mm=float(threshold)
-            )
+            # Get output manager once
+            output_manager = get_output_manager()
+            processed_files = []
             
-            # Save results with metadata
-            metadata = {
-                "processing_info": {
-                    "zarr_path": str(zarr_path),
-                    "shapefile_path": str(shapefile_path),
-                    "variable": variable,
-                    "scenario": "historical",
-                    "threshold": float(threshold),
-                    "workers": int(workers),
-                    "use_distributed": use_distributed
-                },
-                "data_summary": {
-                    "counties_processed": len(results_df['county_id'].unique()),
-                    "years_analyzed": len(results_df['year'].unique()),
-                    "total_records": len(results_df)
+            # Process each variable
+            for variable in variables_to_process:
+                console.print(f"\n[bold cyan]🔄 Processing {variable.upper()} data for {len(gdf)} counties...[/bold cyan]")
+                
+                # Find or verify zarr path for this variable
+                if operation == "stats":
+                    # Auto-find zarr path for stats-only mode
+                    expected_zarr = Path(f"climate_outputs/zarr/{variable}_historical_{stats_region}.zarr")
+                    if expected_zarr.exists():
+                        current_zarr_path = expected_zarr
+                        console.print(f"[green]✅ Found Zarr: {current_zarr_path}[/green]")
+                    else:
+                        console.print(f"[yellow]⚠️ Skipping {variable}: Zarr not found at {expected_zarr}[/yellow]")
+                        continue
+                else:
+                    # Pipeline mode - use converted zarr
+                    current_zarr_path = zarr_path
+                
+                # Get default threshold for this variable
+                if variable == "pr":
+                    threshold = 25.4
+                elif variable == "tasmax":
+                    threshold = 32.0
+                elif variable == "tasmin":
+                    threshold = 0.0
+                else:
+                    threshold = 0.0
+                
+                # Process data
+                results_df = processor.process_zarr_data(
+                    zarr_path=current_zarr_path,
+                    gdf=gdf,
+                    scenario="historical",
+                    variable=variable,
+                    threshold=threshold
+                )
+                
+                # Generate output path
+                suggested_output = output_manager.get_output_path(
+                    variable=variable,
+                    region=stats_region,
+                    scenario="historical",
+                    threshold=threshold
+                )
+                
+                # Save results with metadata
+                metadata = {
+                    "processing_info": {
+                        "zarr_path": str(current_zarr_path),
+                        "shapefile_path": str(shapefile_path),
+                        "variable": variable,
+                        "scenario": "historical",
+                        "threshold": threshold,
+                        "workers": int(workers),
+                        "use_distributed": use_distributed
+                    },
+                    "data_summary": {
+                        "counties_processed": len(results_df['county_id'].unique()),
+                        "years_analyzed": len(results_df['year'].unique()),
+                        "total_records": len(results_df)
+                    }
                 }
-            }
+                
+                output_manager.save_with_metadata(
+                    data=results_df,
+                    output_path=suggested_output,
+                    metadata=metadata,
+                    save_method="csv"
+                )
+                
+                # Get full absolute path for display
+                full_csv_path = suggested_output.resolve()
+                
+                processed_files.append({
+                    'variable': variable,
+                    'output': str(full_csv_path),
+                    'counties': len(results_df['county_id'].unique()),
+                    'records': len(results_df)
+                })
+                
+                console.print(f"[green]✅ {variable.upper()} complete: {full_csv_path}[/green]")
             
-            output_manager.save_with_metadata(
-                data=results_df,
-                output_path=output_csv,
-                metadata=metadata,
-                save_method="csv"
-            )
-            
-            # Show success summary
-            summary_table = Table(title="📊 Processing Complete!")
-            summary_table.add_column("Metric", style="cyan")
-            summary_table.add_column("Value", style="magenta")
-            
-            summary_table.add_row("Counties Processed", str(len(results_df['county_id'].unique())))
-            summary_table.add_row("Years Analyzed", str(len(results_df['year'].unique())))
-            summary_table.add_row("Total Records", str(len(results_df)))
-            summary_table.add_row("Output File", str(output_csv))
-            
-            console.print(summary_table)
-            
-            # Success message
-            console.print(Panel(
-                f"[green]✅ County statistics saved to: {output_csv}[/green]",
-                border_style="green"
-            ))
+            # Show comprehensive summary
+            if processed_files:
+                summary_table = Table(title="📊 Processing Complete!")
+                summary_table.add_column("Variable", style="cyan")
+                summary_table.add_column("Counties", style="yellow")
+                summary_table.add_column("Records", style="magenta")
+                summary_table.add_column("Output File", style="green")
+                
+                for file_info in processed_files:
+                    summary_table.add_row(
+                        file_info['variable'].upper(),
+                        str(file_info['counties']),
+                        str(file_info['records']),
+                        file_info['output']
+                    )
+                
+                console.print(summary_table)
+                
+                # Success message
+                variables_processed = [f['variable'].upper() for f in processed_files]
+                console.print(Panel(
+                    f"[green]✅ Successfully processed {len(processed_files)} variable(s): {', '.join(variables_processed)}[/green]",
+                    border_style="green"
+                ))
+            else:
+                console.print("[yellow]⚠️ No variables were processed[/yellow]")
             
             # Clean up
             processor.close()
