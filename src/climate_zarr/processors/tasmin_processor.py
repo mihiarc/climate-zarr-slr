@@ -8,7 +8,7 @@ import xarray as xr
 from rich.console import Console
 
 from .base_processor import BaseCountyProcessor
-from .processing_strategies import VectorizedStrategy
+from .region_strategy import get_strategy_for_region, infer_region_from_gdf
 from ..utils.data_utils import convert_units
 
 console = Console()
@@ -43,8 +43,9 @@ class TasMinProcessor(BaseCountyProcessor):
         # Standardize coordinates
         tasmin_data = self._standardize_coordinates(tasmin_data)
         
-        # Use optimized VectorizedStrategy for precise geometric processing
-        strategy = VectorizedStrategy()
+        # Select strategy based on region (simple logic: CONUS = chunked, others = vectorized)
+        region = kwargs.get('region', infer_region_from_gdf(gdf))
+        strategy = get_strategy_for_region(region, gdf, self.n_workers)
         
         # Process the data (no threshold needed for tasmin)
         return strategy.process(
@@ -75,8 +76,8 @@ class TasMinProcessor(BaseCountyProcessor):
         """
         console.print(f"[blue]Opening daily minimum temperature Zarr dataset:[/blue] {zarr_path}")
         
-        # Open with optimizations
-        ds = xr.open_zarr(zarr_path, chunks={'time': 365})
+        # Open with native Zarr chunks to avoid rechunking overhead
+        ds = xr.open_zarr(zarr_path)
         
         # Get daily minimum temperature data
         if 'tasmin' not in ds.data_vars:
