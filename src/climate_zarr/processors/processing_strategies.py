@@ -181,8 +181,24 @@ class SpatialChunkedStrategy(ProcessingStrategy):
         from sklearn.cluster import KMeans
         import numpy as np
         
-        # Calculate county centroids for spatial clustering
-        centroids = gdf.geometry.centroid
+        # Calculate county centroids using appropriate projected CRS to avoid distortion
+        original_crs = gdf.crs
+        
+        # Choose appropriate projected CRS based on geographic region
+        if gdf.bounds.miny.min() > 60:  # Arctic regions (Alaska)
+            projected_crs = "EPSG:3413"  # NSIDC Polar Stereographic North
+        elif gdf.bounds.maxy.max() < -60:  # Antarctic regions  
+            projected_crs = "EPSG:3031"  # Antarctic Polar Stereographic
+        elif gdf.bounds.minx.min() > -180 and gdf.bounds.maxx.max() < -60:  # Americas
+            projected_crs = "EPSG:3857"  # Web Mercator (good for CONUS)
+        else:  # Global or mixed regions
+            projected_crs = "EPSG:3857"  # Web Mercator as fallback
+            
+        # Reproject to get accurate centroids, then back to original CRS
+        gdf_projected = gdf.to_crs(projected_crs)
+        centroids_projected = gdf_projected.geometry.centroid
+        centroids = centroids_projected.to_crs(original_crs)
+        
         coords = np.array([[p.x, p.y] for p in centroids])
         
         # Estimate memory usage per county based on bounding box area
