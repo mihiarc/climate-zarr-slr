@@ -91,8 +91,8 @@ class ModernCountyProcessor:
         # Get the appropriate processor
         processor = self._processors[variable]
         
-        # Open the dataset
-        ds = xr.open_zarr(zarr_path, chunks={'time': 365})
+        # Open the dataset using native Zarr chunks to avoid rechunking overhead
+        ds = xr.open_zarr(zarr_path)
         
         # Check if variable exists in dataset
         if variable not in ds.data_vars:
