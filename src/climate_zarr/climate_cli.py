@@ -745,7 +745,7 @@ def interactive_wizard():
         # Performance settings
         workers = questionary.select(
             "⚡ Number of worker processes:",
-            choices=["2", "4", "8", "16"],
+            choices=["2", "4", "8", "16", "32"],
             default="4"
         ).ask()
         
