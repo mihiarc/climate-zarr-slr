@@ -33,15 +33,17 @@ pip install -e .
 
 - **🗜️ NetCDF → Zarr Conversion**: Convert multiple NetCDF files to optimized Zarr format with compression
 - **📈 County Statistics**: Calculate detailed climate statistics by county/region with parallel processing
+- **🌟 Multi-Variable Processing**: Process all climate variables (precipitation, temperature) in one command
 - **🗺️ Regional Clipping**: Built-in support for US regions (CONUS, Alaska, Hawaii, etc.)
-- **🌡️ Multiple Variables**: Support for precipitation, temperature, and extreme weather analysis
+- **🌡️ Smart Variable Detection**: Automatically finds and processes all available climate variables
 - **⚡ Modern Performance**: Leverages Dask, parallel processing, and modern data formats
 - **🎨 Beautiful CLI**: Rich-powered interface with progress bars and beautiful output
 
 ## ✨ Interactive Features
 
 - **🧙‍♂️ Interactive Wizard**: Complete guided experience for beginners and experts
-- **🎯 Smart Prompts**: Intelligent parameter suggestions with beautiful selection menus
+- **🌟 All Variables Option**: Process all climate variables (pr, tas, tasmax, tasmin) in one command
+- **🎯 Smart File Discovery**: Automatically finds Zarr files based on region and variable selection
 - **✅ Safety Confirmations**: Prevent accidental data loss with confirmation dialogs
 - **📂 Smart File Detection**: Automatically discovers and suggests data sources
 - **🗺️ Visual Region Selection**: Choose regions with descriptions and coverage details
@@ -77,9 +79,10 @@ Individual commands with intelligent prompting:
 climate-zarr create-zarr
 # Prompts: Select files → Output name → Region? → Compression?
 
-# Interactive county statistics
+# Interactive county statistics (improved UX!)
 climate-zarr county-stats  
-# Prompts: Zarr path → Region → Variable → Threshold → Output file
+# New flow: Region → Variable(s) → Auto-find Zarr → Process all variables
+# Or select "All Variables" to process pr, tas, tasmax, tasmin at once!
 ```
 
 ### ⚡ Command-Line Mode - **Best for Automation**
@@ -284,21 +287,58 @@ The toolkit supports these predefined regions:
 | `tasmax` | Daily Maximum Temperature | °C | Mean annual max, extremes, hot days above threshold |
 | `tasmin` | Daily Minimum Temperature | °C | Mean annual min, cold days, frost-free period |
 
+## 🌟 Multi-Variable Processing
+
+**New Feature!** Process all climate variables in one command:
+
+```bash
+# Interactive: Select "All Variables" option
+climate-zarr county-stats
+# → Choose region → Select "🌟 All Variables" → Auto-process all available data
+
+# The system will automatically:
+# ✅ Find all available Zarr files for the region (pr, tas, tasmax, tasmin)
+# ✅ Use appropriate thresholds: pr=25.4mm, tasmax=32°C, tasmin=0°C, tas=0°C  
+# ✅ Generate separate output files for each variable
+# ✅ Show comprehensive progress and results summary
+```
+
+**Benefits:**
+- **🚀 Time Saving**: Process all variables with one command instead of four
+- **🎯 Consistent Processing**: Same settings applied across all variables
+- **📊 Comprehensive Results**: Get complete climate analysis for a region
+- **🔍 Smart Discovery**: Automatically finds available data files
+
 ## 📁 Project Structure
 
 ```
 climate-zarr/
-├── climate_cli.py              # 🎯 Interactive CLI tool (NEW!)
-├── stack_nc_to_zarr.py         # NetCDF → Zarr conversion
-├── calculate_county_stats.py   # County statistics processor
-├── climate_config.py           # Configuration management
-├── demo_cli.py                 # Interactive demo script
+├── src/climate_zarr/
+│   ├── climate_cli.py          # 🎯 Interactive CLI with wizard & multi-variable support
+│   ├── stack_nc_to_zarr.py     # NetCDF → Zarr conversion engine  
+│   ├── county_processor.py     # Modern modular county processor
+│   ├── climate_config.py       # Pydantic configuration management
+│   ├── demo_cli.py            # Interactive demo script
+│   ├── processors/            # 🔧 Modular processing components
+│   │   ├── base_processor.py  # Abstract base processor
+│   │   ├── precipitation_processor.py  # Precipitation analysis
+│   │   ├── temperature_processor.py    # Temperature analysis  
+│   │   ├── tasmax_processor.py         # Max temperature processing
+│   │   └── tasmin_processor.py         # Min temperature processing
+│   └── utils/                 # 🛠️ Utility modules
+│       ├── data_utils.py      # Unit conversions, statistics
+│       ├── spatial_utils.py   # Geospatial operations
+│       └── output_utils.py    # Standardized file output
 ├── utils/
-│   ├── split_counties_by_region.py  # County shapefile splitter
+│   ├── split_counties_by_region.py  # County shapefile preparation
 │   └── README.md               # Data preparation instructions
-├── data/                       # 📁 NetCDF input files (user-provided)
-├── regional_counties/          # 🗺️ County shapefiles by region (user-generated)
-└── pyproject.toml             # Project dependencies
+├── climate_outputs/           # 📊 Standardized output structure  
+│   ├── stats/                 # County statistics by variable
+│   ├── zarr/                  # Zarr datasets
+│   └── reports/               # Processing metadata
+├── data/                      # 📁 NetCDF input files (user-provided)
+├── regional_counties/         # 🗺️ County shapefiles by region (user-generated)
+└── pyproject.toml            # Modern Python project configuration
 ```
 
 **Note**: `data/` and `regional_counties/` directories are not included in the repository. Users must:
@@ -332,9 +372,10 @@ python climate_cli.py info
 python climate_cli.py create-zarr
 # Follow prompts: data/ → precipitation.zarr → CONUS → ZSTD
 
-# 3. Interactive county statistics
+# 3. Interactive county statistics (NEW: Multi-variable support!)
 python climate_cli.py county-stats  
-# Follow prompts: precipitation.zarr → CONUS → pr → 25.4 → results.csv
+# New flow: CONUS → "🌟 All Variables" → Auto-process pr, tas, tasmax, tasmin
+# Or: CONUS → Select individual variable → Process single variable
 ```
 
 ### ⚡ **Command-Line Workflow** (Automation & scripts)
@@ -384,7 +425,9 @@ python climate_cli.py county-stats data.zarr conus -v pr  # Known dataset, inter
 
 ### Modern Interactive Stack (2025)
 - **CLI Framework**: Typer with Rich integration for beautiful output
-- **Interactive Prompts**: Questionary for beautiful selection menus and confirmations
+- **Interactive Prompts**: Questionary for beautiful selection menus and confirmations  
+- **Modular Architecture**: Specialized processors for each climate variable
+- **Multi-Variable Processing**: Process all climate variables simultaneously
 - **Data Processing**: xarray, dask, zarr (v3 ready)
 - **Geospatial**: geopandas, rioxarray, pyogrio
 - **Performance**: Parallel processing, chunked operations
