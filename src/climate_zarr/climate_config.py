@@ -235,13 +235,6 @@ class ClimateConfig(BaseModel):
             lon_min=-68.0,  # Expanded to include Mayagüez
             lon_max=-64.5
         ),
-        'pr_vi': RegionConfig(
-            name='Puerto Rico/USVI',
-            lat_min=17.5,
-            lat_max=18.6,
-            lon_min=-67.5,
-            lon_max=-64.5
-        ),
         'global': RegionConfig(
             name='Global',
             lat_min=-90.0,
