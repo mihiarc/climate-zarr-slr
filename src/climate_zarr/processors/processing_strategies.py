@@ -108,8 +108,8 @@ class SpatialChunkedStrategy(ProcessingStrategy):
         console.print(f"[cyan]Available memory: {available_memory_gb:.1f} GB[/cyan]")
         console.print(f"[cyan]Target memory usage: {target_memory_gb:.1f} GB ({self.target_memory_usage*100:.0f}%)[/cyan]")
         
-        # Create spatial chunks based on geography and data volume
-        chunks = self._create_spatial_chunks(data, gdf, target_memory_gb)
+        # Create spatial chunks based on geography, data volume, and worker count
+        chunks = self._create_spatial_chunks(data, gdf, target_memory_gb, n_workers)
         
         console.print(f"[green]Created {len(chunks)} spatial chunks for processing[/green]")
         
@@ -175,7 +175,7 @@ class SpatialChunkedStrategy(ProcessingStrategy):
         return pd.DataFrame(results)
     
     def _create_spatial_chunks(self, data: xr.DataArray, gdf: gpd.GeoDataFrame, 
-                              target_memory_gb: float) -> List[List[int]]:
+                              target_memory_gb: float, n_workers: int = 4) -> List[List[int]]:
         """Create spatially-aware chunks optimized for memory usage."""
         from shapely.geometry import Point
         from sklearn.cluster import KMeans
@@ -205,10 +205,22 @@ class SpatialChunkedStrategy(ProcessingStrategy):
         county_memory_estimates = self._estimate_county_memory_usage(data, gdf)
         
         # Create initial spatial clusters using K-means
-        n_initial_clusters = max(self.min_chunk_size, 
-                               int(len(gdf) * np.mean(county_memory_estimates) / target_memory_gb))
+        # Scale clusters based on both memory constraints and worker availability
+        memory_based_clusters = max(self.min_chunk_size, 
+                                   int(len(gdf) * np.mean(county_memory_estimates) / target_memory_gb))
         
-        console.print(f"[cyan]Creating {n_initial_clusters} initial spatial clusters[/cyan]")
+        # Scale with workers to ensure good parallelization
+        # Use 1.5x workers as target to allow for load balancing
+        worker_based_clusters = max(n_workers, int(n_workers * 1.5))
+        
+        # Take the maximum to ensure both memory and parallelization constraints are met
+        # But cap at reasonable limits
+        n_initial_clusters = min(
+            max(memory_based_clusters, worker_based_clusters),
+            len(gdf) // self.min_chunk_size  # Don't create more clusters than possible
+        )
+        
+        console.print(f"[cyan]Creating {n_initial_clusters} initial spatial clusters (memory: {memory_based_clusters}, workers: {worker_based_clusters})[/cyan]")
         
         kmeans = KMeans(n_clusters=n_initial_clusters, random_state=42, n_init=10)
         cluster_labels = kmeans.fit_predict(coords)
