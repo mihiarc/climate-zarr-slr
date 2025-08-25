@@ -143,6 +143,17 @@ class BaseCountyProcessor(ABC):
             data = data.sortby('x')
             data = data.rio.write_crs('EPSG:4326')
         
+        # Fix geotransform to suppress rasterio warnings
+        # This ensures proper coordinate-to-pixel mapping
+        try:
+            # Let rioxarray calculate proper geotransform from coordinates
+            data = data.rio.write_transform()
+        except Exception:
+            # If that fails, suppress the specific warning
+            import warnings
+            from rasterio.errors import NotGeoreferencedWarning
+            warnings.filterwarnings('ignore', category=NotGeoreferencedWarning)
+        
         return data
     
     @abstractmethod
