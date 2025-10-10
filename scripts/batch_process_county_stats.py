@@ -29,7 +29,8 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
 # Add src to Python path for imports
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+# Script is in scripts/ directory, need to go up to project root first
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from climate_zarr.county_processor import ModernCountyProcessor
 # Strategy selection is now handled internally by processors via create_processing_plan

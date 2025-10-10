@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A specialized **climate data processing pipeline** for studying the impact of climate change on population and income in a **sea level rise (SLR)** context. Built on the Climate Zarr Toolkit, this application provides an interactive CLI for analyzing climate's socioeconomic impacts through NetCDF to Zarr conversion and county-level statistical analysis.
+A specialized **climate data processing pipeline** for preparing county-level climate data for sea level rise (SLR) research. Built on the Climate Zarr Toolkit, this application provides an interactive CLI for converting NetCDF climate models to analysis-ready county statistics that integrate with demographic and economic datasets.
 
 ## 🎯 Research Focus
 
@@ -13,6 +13,25 @@ This pipeline is designed specifically for **sea level rise (SLR) research**, en
 - Economic vulnerability to climate change and SLR
 - County-level climate statistics for socioeconomic modeling
 - Regional climate patterns affecting at-risk communities
+
+## 🎯 Intended Use
+
+**What This Tool Provides:**
+- ✅ NetCDF to Zarr conversion with regional clipping
+- ✅ County-level climate statistics (precipitation, temperature)
+- ✅ Standardized CSV outputs ready for analysis
+- ✅ Multi-region, multi-variable, multi-scenario processing
+
+**What You Need to Bring:**
+- 📊 Your demographic and economic datasets (population, income, housing, etc.)
+- 🔬 Your analysis methods and models
+- 📈 Statistical integration and visualization tools
+
+**Complete Research Workflow:**
+1. **This tool**: Prepare climate data → Generate county-level climate statistics
+2. **Your work**: Join climate stats with demographic/economic data → Analyze correlations → Model impacts → Generate insights
+
+This pipeline focuses on **data preparation** rather than complete impact analysis. It transforms raw climate models into county-level statistics that you can easily integrate with your socioeconomic datasets for SLR vulnerability assessment.
 
 ## 📦 Installation
 
