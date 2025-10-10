@@ -316,6 +316,288 @@ Each CSV has accompanying metadata:
 
 **Size**: ~300KB-2.5MB per region/scenario combination
 
+## Final Analysis-Ready Output Format
+
+### Overview
+
+The final output for SLR research is a **unified time-series dataset** combining multiple climate variables into a single analysis-ready file. This format is optimized for integration with demographic and economic data.
+
+### Example File
+
+**Location**: `/path/to/external/drive/climate_metrics_ssp370.csv`
+
+**Description**: County-level climate metrics across the full time series (2015-2100) for all US counties, territories, and possessions.
+
+### File Structure
+
+```csv
+cid2,year,scenario,name,daysabove1in,daysabove90F,tmaxavg,annual_mean_temp,annual_total_precip
+78030,2015,ssp370,"St. Thomas, VI",14,0.0,28.372203826904297,27.512693405151367,2803.7412109375
+78030,2016,ssp370,"St. Thomas, VI",26,0.0,28.202999114990234,27.395925521850582,2691.10693359375
+...
+```
+
+### Data Dimensions
+
+| Dimension | Count | Description |
+|-----------|-------|-------------|
+| **Counties** | 3,231 | All US counties, territories (PR, VI, Guam, etc.) |
+| **Years** | 86 | 2015-2100 (full SSP scenario period) |
+| **Total Rows** | ~277,781 | 3,231 counties × 86 years |
+| **File Size** | ~25MB | Compressed CSV format |
+
+### Column Definitions
+
+| Column | Type | Description | Units | Typical Range |
+|--------|------|-------------|-------|---------------|
+| `cid2` | string | County identifier (FIPS code) | - | 01001-78030 |
+| `year` | int | Calendar year | - | 2015-2100 |
+| `scenario` | string | Climate scenario | - | ssp126, ssp245, ssp370, ssp585 |
+| `name` | string | County name with state/territory | - | "Kent, DE" |
+| `daysabove1in` | int | Days with precipitation ≥ 1 inch (25.4mm) | days | 0-50 |
+| `daysabove90F` | float | Days with maximum temperature ≥ 90°F (32.2°C) | days | 0-365 |
+| `tmaxavg` | float | Average daily maximum temperature | °C | -30 to 45 |
+| `annual_mean_temp` | float | Annual mean temperature | °C | -20 to 35 |
+| `annual_total_precip` | float | Total annual precipitation | mm | 0-8000 |
+
+### Key Features
+
+**1. Unified Time Series**
+- All climate variables in single file
+- Consistent temporal coverage (2015-2100)
+- Ready for time-series analysis and forecasting
+
+**2. Analysis-Ready Format**
+- Wide format with one row per county-year
+- No missing values (all counties have data for all years)
+- Directly joinable with demographic/economic datasets
+
+**3. Multi-Variable Integration**
+- Combines precipitation metrics (extreme rainfall events)
+- Combines temperature metrics (heat exposure)
+- Enables compound climate impact analysis
+
+**4. Geographic Coverage**
+- All 50 states
+- Puerto Rico and US Virgin Islands
+- Guam and other territories
+- Complete US geographic footprint
+
+### Sample Records
+
+**Continental US (Washington State)**:
+```
+53069,2037,ssp370,"Wahkiakum, WA",12,0.0,15.597097396850586,11.469320297241213,1413.783447265625
+```
+
+**Puerto Rico**:
+```
+72029,2067,ssp370,"Canóvanas, PR",9,0.0,28.61157989501953,27.76080322265625,2106.212890625
+```
+
+**US Virgin Islands**:
+```
+78030,2015,ssp370,"St. Thomas, VI",14,0.0,28.372203826904297,27.512693405151367,2803.7412109375
+78020,2015,ssp370,"St. John, VI",12,0.0,28.45701026916504,27.57619285583496,2666.4404296875
+```
+
+### Usage in SLR Research
+
+**1. Time Series Analysis**
+```python
+import pandas as pd
+
+# Load final output
+df = pd.read_csv('climate_metrics_ssp370.csv')
+
+# Analyze trends for specific county
+st_thomas = df[df['cid2'] == '78030']
+
+# Plot precipitation trends
+import matplotlib.pyplot as plt
+plt.plot(st_thomas['year'], st_thomas['annual_total_precip'])
+plt.title('Annual Precipitation Trend - St. Thomas, VI (SSP3-7.0)')
+plt.xlabel('Year')
+plt.ylabel('Precipitation (mm)')
+plt.show()
+```
+
+**2. Integration with Demographic Data**
+```python
+import pandas as pd
+
+# Load climate metrics
+climate = pd.read_csv('climate_metrics_ssp370.csv')
+
+# Load population data (user-provided)
+population = pd.read_csv('population_by_county_year.csv')
+# Expected columns: cid2, year, population, median_age, households
+
+# Merge on county and year
+merged = climate.merge(population, on=['cid2', 'year'], how='inner')
+
+# Analyze climate impacts on population
+# Example: Calculate population exposed to extreme heat
+merged['pop_exposed_heat'] = merged['population'] * (merged['daysabove90F'] / 365)
+
+# Aggregate by region or state
+state_exposure = merged.groupby('year')['pop_exposed_heat'].sum()
+```
+
+**3. Economic Vulnerability Assessment**
+```python
+import pandas as pd
+import geopandas as gpd
+
+# Load climate metrics
+climate = pd.read_csv('climate_metrics_ssp370.csv')
+
+# Load economic data (user-provided)
+income = pd.read_csv('income_by_county_year.csv')
+# Expected columns: cid2, year, median_income, poverty_rate
+
+# Load county geometries
+counties = gpd.read_file('regional_counties/conus_counties.shp')
+
+# Merge all datasets
+analysis = climate.merge(income, on=['cid2', 'year'])
+analysis = counties.merge(analysis, left_on='GEOID', right_on='cid2')
+
+# Calculate climate-economic vulnerability index
+analysis['vulnerability'] = (
+    analysis['daysabove1in'] * 0.3 +  # Flooding risk
+    analysis['daysabove90F'] * 0.5 +   # Heat exposure
+    (100 - analysis['median_income'] / 1000) * 0.2  # Economic sensitivity
+)
+
+# Map vulnerability by county for specific year
+year_2050 = analysis[analysis['year'] == 2050]
+year_2050.plot(column='vulnerability', legend=True, cmap='YlOrRd')
+```
+
+**4. Comparative Scenario Analysis**
+```python
+import pandas as pd
+
+# Load multiple scenarios
+ssp245 = pd.read_csv('climate_metrics_ssp245.csv')
+ssp370 = pd.read_csv('climate_metrics_ssp370.csv')
+ssp585 = pd.read_csv('climate_metrics_ssp585.csv')
+
+# Compare temperature projections
+scenarios = pd.concat([ssp245, ssp370, ssp585])
+
+# Average temperature by scenario over time
+temp_comparison = scenarios.groupby(['scenario', 'year'])['annual_mean_temp'].mean()
+
+# Plot scenario comparison
+temp_comparison.unstack(level=0).plot()
+plt.title('US Average Temperature by Scenario')
+plt.ylabel('Temperature (°C)')
+plt.xlabel('Year')
+plt.legend(title='Scenario')
+```
+
+### Creating This Output Format
+
+This unified format is created by combining individual county statistics files:
+
+```python
+import pandas as pd
+from pathlib import Path
+
+def create_unified_output(stats_dir, scenario, output_file):
+    """
+    Combine variable-specific county statistics into unified time-series format.
+
+    Args:
+        stats_dir: Path to climate_outputs/stats/
+        scenario: Climate scenario (e.g., 'ssp370')
+        output_file: Output CSV path
+    """
+    all_data = []
+
+    # Process each variable
+    for var in ['pr', 'tas', 'tasmax', 'tasmin']:
+        var_stats = pd.read_csv(f'{stats_dir}/{var}/all_regions/{scenario}/{var}_stats.csv')
+
+        # Reshape from annual statistics to time series
+        # (implementation depends on your specific processing pipeline)
+
+        all_data.append(var_stats)
+
+    # Merge all variables
+    unified = pd.concat(all_data, axis=1)
+
+    # Save unified output
+    unified.to_csv(output_file, index=False)
+    print(f"Created: {output_file} ({len(unified):,} rows)")
+
+# Example usage
+create_unified_output(
+    stats_dir='climate_outputs/stats',
+    scenario='ssp370',
+    output_file='climate_metrics_ssp370.csv'
+)
+```
+
+### File Naming Convention
+
+```
+climate_metrics_{scenario}.csv
+
+Examples:
+- climate_metrics_ssp245.csv  # Medium emissions
+- climate_metrics_ssp370.csv  # Medium-high emissions
+- climate_metrics_ssp585.csv  # High emissions
+```
+
+### Data Quality Notes
+
+**Coverage**:
+- ✅ All US counties included
+- ✅ All territories (PR, VI, Guam, etc.)
+- ✅ Complete time series (no missing years)
+- ✅ All climate variables present
+
+**Validation**:
+- Temperature values in reasonable ranges (-30°C to 45°C)
+- Precipitation values non-negative
+- County identifiers match US Census FIPS codes
+- Time series continuity (no gaps)
+
+**Known Limitations**:
+- Future projections have inherent uncertainty
+- County boundaries may change over time (using 2024 boundaries)
+- Some small territories may have limited spatial resolution
+- Climate model resolution (~50-100km) may not capture microclimates
+
+### Related Files
+
+For complete analysis, you may also need:
+
+1. **County Boundaries**: `regional_counties/*.shp` - Spatial geometries
+2. **Population Data**: (User-provided) - Demographic projections
+3. **Economic Data**: (User-provided) - Income, employment, property values
+4. **Sea Level Rise Data**: (User-provided) - SLR projections by coastal county
+5. **Infrastructure Data**: (User-provided) - Critical infrastructure locations
+
+### Best Practices
+
+**✅ DO:**
+- Use this format for final analysis and visualization
+- Join with demographic/economic data on `cid2` and `year`
+- Version control your analysis scripts, not the data
+- Document any data transformations or derived metrics
+
+**❌ DON'T:**
+- Modify this file directly (regenerate from source data)
+- Assume linear trends (use appropriate statistical methods)
+- Ignore uncertainty in future projections
+- Mix scenarios in the same analysis without clear labeling
+
+**Size**: ~25MB per scenario (uncompressed CSV)
+
 ## Regional County Shapefiles
 
 ### Location
