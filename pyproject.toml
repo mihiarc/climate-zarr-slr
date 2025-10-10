@@ -1,12 +1,12 @@
 [project]
-name = "climate-zarr"
+name = "climate-zarr-slr"
 version = "0.1.0"
-description = "Interactive CLI toolkit for processing climate data with NetCDF to Zarr conversion and county-level analysis"
+description = "Specialized climate data pipeline for sea level rise research: analyzing climate's impact on population and income through NetCDF to Zarr conversion and county-level analysis"
 authors = [{name = "Chris Mihiar", email = "chris.mihiar.fs@gmail.com"}]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
-keywords = ["climate", "zarr", "netcdf", "data-processing", "geospatial", "science", "county"]
+keywords = ["climate", "sea-level-rise", "slr", "zarr", "netcdf", "socioeconomic", "population", "income", "vulnerability", "coastal", "research"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -19,7 +19,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
     "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Hydrology",
     "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Sociology",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
@@ -70,9 +72,10 @@ dev = [
 climate-zarr = "climate_zarr.climate_cli:app"
 
 [project.urls]
-"Homepage" = "https://github.com/mihiarc/climate-zarr"
-"Bug Tracker" = "https://github.com/mihiarc/climate-zarr/issues"
-"Documentation" = "https://github.com/mihiarc/climate-zarr#readme"
+"Homepage" = "https://github.com/mihiarc/climate-zarr-slr"
+"Bug Tracker" = "https://github.com/mihiarc/climate-zarr-slr/issues"
+"Documentation" = "https://github.com/mihiarc/climate-zarr-slr#readme"
+"Source" = "https://github.com/mihiarc/climate-zarr-slr"
 
 [tool.setuptools]
 

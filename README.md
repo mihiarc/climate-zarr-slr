@@ -1,41 +1,49 @@
-# 🌡️ Climate Zarr Toolkit
+# 🌊 Climate Zarr SLR - Sea Level Rise Research Pipeline
 
-[![PyPI version](https://badge.fury.io/py/climate-zarr.svg)](https://badge.fury.io/py/climate-zarr)
-[![Python](https://img.shields.io/pypi/pyversions/climate-zarr.svg)](https://pypi.org/project/climate-zarr/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-A powerful, **interactive CLI toolkit** for processing climate data with guided wizards, smart prompts, and beautiful user experiences. Features cutting-edge NetCDF to Zarr conversion and county-level statistical analysis.
+A specialized **climate data processing pipeline** for studying the impact of climate change on population and income in a **sea level rise (SLR)** context. Built on the Climate Zarr Toolkit, this application provides an interactive CLI for analyzing climate's socioeconomic impacts through NetCDF to Zarr conversion and county-level statistical analysis.
+
+## 🎯 Research Focus
+
+This pipeline is designed specifically for **sea level rise (SLR) research**, enabling analysis of:
+- Climate impacts on coastal populations and demographics
+- Economic vulnerability to climate change and SLR
+- County-level climate statistics for socioeconomic modeling
+- Regional climate patterns affecting at-risk communities
 
 ## 📦 Installation
 
-### From PyPI (Recommended)
+### From Source (Recommended for Research)
 
 ```bash
-pip install climate-zarr
+git clone https://github.com/mihiarc/climate-zarr-slr.git
+cd climate-zarr-slr
+uv install
+# or
+uv pip install -e .
 ```
 
-Or with [uv](https://github.com/astral-sh/uv):
+### Using uv (Modern Python Package Manager)
 
 ```bash
-uv pip install climate-zarr
-```
-
-### From Source
-
-```bash
-git clone https://github.com/yourusername/climate-zarr.git
-cd climate-zarr
-pip install -e .
+uv pip install git+https://github.com/mihiarc/climate-zarr-slr.git
 ```
 
 ## 🚀 Main Features
 
+### Research-Focused Pipeline
+- **🌊 SLR-Optimized Processing**: Designed for analyzing climate's impact on coastal populations and income
+- **📊 Socioeconomic Integration**: County-level climate statistics ready for demographic and economic modeling
+- **🗺️ Coastal Region Support**: Built-in focus on US coastal regions (CONUS, Alaska, Hawaii, Puerto Rico, Guam)
+- **🌡️ Climate Impact Metrics**: Precipitation extremes, temperature patterns, and climate vulnerability indicators
+
+### Technical Capabilities
 - **🗜️ NetCDF → Zarr Conversion**: Convert multiple NetCDF files to optimized Zarr format with compression
 - **📈 County Statistics**: Calculate detailed climate statistics by county/region with parallel processing
 - **🌟 Multi-Variable Processing**: Process all climate variables (precipitation, temperature) in one command
-- **🗺️ Regional Clipping**: Built-in support for US regions (CONUS, Alaska, Hawaii, etc.)
-- **🌡️ Smart Variable Detection**: Automatically finds and processes all available climate variables
 - **⚡ Modern Performance**: Leverages Dask, parallel processing, and modern data formats
 - **🎨 Beautiful CLI**: Rich-powered interface with progress bars and beautiful output
 
@@ -133,8 +141,8 @@ python climate_cli.py wizard
 
 ```bash
 # Clone the repository
-git clone https://github.com/mihiarc/climate-zarr
-cd climate-zarr
+git clone https://github.com/mihiarc/climate-zarr-slr.git
+cd climate-zarr-slr
 
 # Install dependencies (using uv - the modern Python package manager)
 uv install
@@ -312,17 +320,17 @@ climate-zarr county-stats
 ## 📁 Project Structure
 
 ```
-climate-zarr/
+climate-zarr-slr/
 ├── src/climate_zarr/
 │   ├── climate_cli.py          # 🎯 Interactive CLI with wizard & multi-variable support
-│   ├── stack_nc_to_zarr.py     # NetCDF → Zarr conversion engine  
+│   ├── stack_nc_to_zarr.py     # NetCDF → Zarr conversion engine
 │   ├── county_processor.py     # Modern modular county processor
 │   ├── climate_config.py       # Pydantic configuration management
 │   ├── demo_cli.py            # Interactive demo script
 │   ├── processors/            # 🔧 Modular processing components
 │   │   ├── base_processor.py  # Abstract base processor
 │   │   ├── precipitation_processor.py  # Precipitation analysis
-│   │   ├── temperature_processor.py    # Temperature analysis  
+│   │   ├── temperature_processor.py    # Temperature analysis
 │   │   ├── tasmax_processor.py         # Max temperature processing
 │   │   └── tasmin_processor.py         # Min temperature processing
 │   └── utils/                 # 🛠️ Utility modules
@@ -332,8 +340,8 @@ climate-zarr/
 ├── utils/
 │   ├── split_counties_by_region.py  # County shapefile preparation
 │   └── README.md               # Data preparation instructions
-├── climate_outputs/           # 📊 Standardized output structure  
-│   ├── stats/                 # County statistics by variable
+├── climate_outputs/           # 📊 Standardized output structure
+│   ├── stats/                 # County statistics by variable (for SLR modeling)
 │   ├── zarr/                  # Zarr datasets
 │   └── reports/               # Processing metadata
 ├── data/                      # 📁 NetCDF input files (user-provided)
@@ -341,9 +349,9 @@ climate-zarr/
 └── pyproject.toml            # Modern Python project configuration
 ```
 
-**Note**: `data/` and `regional_counties/` directories are not included in the repository. Users must:
-1. Add their own NetCDF climate data to `data/`
-2. Follow [`utils/README.md`](utils/README.md) to download and prepare county shapefiles
+**Note**: `data/` and `regional_counties/` directories are not included in the repository. Researchers must:
+1. Add their own NetCDF climate data to `data/` (e.g., CMIP6 models for SLR scenarios)
+2. Follow [`utils/README.md`](utils/README.md) to download and prepare county shapefiles for demographic analysis
 
 ## 🎯 Usage Examples
 
@@ -483,19 +491,33 @@ python climate_cli.py info             # System overview
 python climate_cli.py --help           # See all commands
 ```
 
+## 🌊 Sea Level Rise Research Applications
+
+This pipeline is specifically designed to support SLR research by:
+
+1. **Climate Impact Quantification**: Generate county-level climate statistics for linking to demographic and economic data
+2. **Coastal Vulnerability Assessment**: Process precipitation and temperature extremes for coastal counties
+3. **Socioeconomic Modeling**: Provide standardized climate outputs that integrate with population and income datasets
+4. **Regional Analysis**: Support multi-region processing for comparative SLR impact studies
+5. **Scenario Planning**: Handle multiple climate scenarios (historical, SSP2-4.5, SSP5-8.5) for future projections
+
 ## 🤝 Contributing
 
-This is a modern, educational toolkit showcasing 2025 best practices in **interactive CLI development**. Key patterns demonstrated:
+This specialized research pipeline is built on the Climate Zarr Toolkit, demonstrating:
 
+- **🌊 Domain-Specific Adaptation**: Tailoring general tools for SLR research
+- **📊 Research Data Engineering**: Efficient processing pipelines for climate-socioeconomic analysis
 - **🎨 Modern CLI Design**: Typer + Rich + Questionary for beautiful UX
-- **🎯 Interactive UX Patterns**: Beautiful prompts, confirmations, selections
-- **⚡ Performance Optimization**: Chunking, compression, parallel processing
-- **🎯 CLI Design Excellence**: User-friendly command interfaces with rich feedback
-- **🔄 Data Engineering**: Efficient conversion and processing pipelines
-- **🌟 Open Source Integration**: Leveraging the latest ecosystem tools
+- **⚡ Performance Optimization**: Chunking, compression, parallel processing for large climate datasets
+- **🔬 Reproducible Science**: Standardized outputs and documented workflows
 
-**🎬 Start your journey**: `python climate_cli.py wizard`
+## 📚 Related Work
+
+Built on top of the [Climate Zarr Toolkit](https://github.com/mihiarc/climate-zarr) foundation, this specialized pipeline adapts general climate data processing capabilities for sea level rise research applications.
+
+**🎬 Start your research**: `python climate_cli.py wizard`
 
 ---
 
 *Built with modern 2025 tools: Python 3.10+, Typer, Rich, Questionary, xarray, Zarr, Dask, and more!*
+*Specialized for sea level rise research and climate socioeconomic impact analysis.*

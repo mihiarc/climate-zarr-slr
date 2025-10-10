@@ -1,8 +1,16 @@
 """
-Climate Zarr Toolkit
+Climate Zarr SLR - Sea Level Rise Research Pipeline
 
-Interactive CLI toolkit for processing climate data with NetCDF to Zarr conversion
-and county-level statistical analysis.
+Specialized climate data pipeline for studying the impact of climate change on
+population and income in a sea level rise (SLR) context. Built on the Climate
+Zarr Toolkit, this application provides tools for analyzing climate's socioeconomic
+impacts through NetCDF to Zarr conversion and county-level statistical analysis.
+
+Research Focus:
+- Climate impacts on coastal populations and demographics
+- Economic vulnerability to climate change and SLR
+- County-level climate statistics for socioeconomic modeling
+- Regional climate patterns affecting at-risk communities
 """
 
 from climate_zarr._version import __version__
