@@ -110,11 +110,14 @@ climate_outputs/**/*.zarr/
 climate_outputs/**/*.parquet
 climate_outputs/**/*.nc
 
-# Processing artifacts
-batch_process_county_stats.py
-monitor_processing.py
+# Processing artifacts and build outputs
+dist/
+build/
 *.log
 *.tmp
+climate_reports/
+test_reports/
+tl_*_us_county/
 
 # Data files - CSV, TXT, and images
 *.csv
@@ -124,10 +127,9 @@ monitor_processing.py
 !README.txt
 !requirements.txt
 
-# UV lock file (optional - some prefer to include it)
-# uv.lock 
+# Claude AI instructions
 CLAUDE.md
-
-# Claude AI
 .claude/
+
+# UV lock file
 uv.lock
