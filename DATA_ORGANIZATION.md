@@ -4,9 +4,146 @@
 
 This document describes the organization of climate data for the **climate-zarr-slr** project, a specialized pipeline for studying the impact of climate change on population and income in a sea level rise (SLR) context.
 
+## Data Acquisition
+
+### Obtaining Climate Data
+
+This project uses **NorESM2-LM** climate model data from the CMIP6 project. Here's how to acquire the data:
+
+#### Prerequisites
+
+1. **ESGF Account**: Create a free account at any ESGF node:
+   - US Node: https://esgf-node.llnl.gov/
+   - Create account: https://esgf-node.llnl.gov/user/add/
+
+2. **Storage**: Ensure you have sufficient disk space (~300GB for all scenarios)
+
+3. **Download Tool**: Install `wget` or use ESGF's web interface
+
+#### Step-by-Step Download Instructions
+
+**Option 1: Web Interface (Recommended for beginners)**
+
+1. Navigate to ESGF search: https://esgf-node.llnl.gov/search/cmip6/
+2. Apply these filters:
+   - **Source ID**: NorESM2-LM
+   - **Experiment ID**: historical, ssp126, ssp245, ssp370, ssp585
+   - **Variable**: pr, tas, tasmax, tasmin
+   - **Frequency**: day
+   - **Variant Label**: r1i1p1f1
+   - **Grid Label**: gn
+3. Select desired files and download via HTTP or use the wget script generator
+4. Organize downloads by variable and scenario (see directory structure below)
+
+**Option 2: Command-Line with wget (Advanced)**
+
+```bash
+# Create directory structure
+mkdir -p NorESM2-LM/{pr,tas,tasmax,tasmin}/{historical,ssp126,ssp245,ssp370,ssp585}
+
+# Example: Download historical precipitation data
+# (You'll need to generate wget scripts from ESGF web interface)
+cd NorESM2-LM/pr/historical/
+wget -i wget_script.sh  # Generated from ESGF
+
+# Repeat for each variable and scenario
+```
+
+**Option 3: Using ESGF API (Most automated)**
+
+```python
+# Install pyesgf
+pip install pyesgf
+
+# Example search and download script
+from pyesgf.search import SearchConnection
+import subprocess
+
+conn = SearchConnection('https://esgf-node.llnl.gov/esg-search', distrib=True)
+
+# Search for NorESM2-LM daily precipitation data
+ctx = conn.new_context(
+    project='CMIP6',
+    source_id='NorESM2-LM',
+    experiment_id=['historical', 'ssp245', 'ssp370', 'ssp585'],
+    variable='pr',
+    frequency='day',
+    variant_label='r1i1p1f1',
+    grid_label='gn'
+)
+
+# Download files
+for result in ctx.search():
+    for file_ctx in result.file_context().search():
+        urls = file_ctx.download_urls
+        # Download using wget or urllib
+```
+
+#### Data Organization After Download
+
+Organize downloaded files into this structure:
+
+```
+NorESM2-LM/
+├── pr/                    # Precipitation
+│   ├── historical/        # Files: pr_day_NorESM2-LM_historical_r1i1p1f1_gn_1950_v1.1.nc, etc.
+│   ├── ssp126/           # Files: pr_day_NorESM2-LM_ssp126_r1i1p1f1_gn_2015_v1.1.nc, etc.
+│   ├── ssp245/
+│   ├── ssp370/
+│   └── ssp585/
+├── tas/                   # Air Temperature
+│   └── [same structure]
+├── tasmax/                # Daily Maximum Temperature
+│   └── [same structure]
+└── tasmin/                # Daily Minimum Temperature
+    └── [same structure]
+```
+
+#### Expected File Sizes
+
+| Variable | Scenario | Time Period | Approximate Size |
+|----------|----------|-------------|------------------|
+| pr | historical | 1950-2014 | ~14GB |
+| pr | ssp245 | 2015-2100 | ~19GB |
+| tas | historical | 1950-2014 | ~14GB |
+| tas | ssp245 | 2015-2100 | ~19GB |
+| tasmax | historical | 1950-2014 | ~14GB |
+| tasmin | historical | 1950-2014 | ~14GB |
+
+**Total (all variables, historical + ssp245)**: ~140GB
+**Total (all variables, all scenarios)**: ~300GB
+
+#### Alternative Data Sources
+
+If NorESM2-LM is not available, you can use other CMIP6 models:
+- **GFDL-ESM4**: NOAA Geophysical Fluid Dynamics Laboratory
+- **MIROC6**: Japanese Earth system model
+- **CESM2**: Community Earth System Model
+
+Adjust the search filters in ESGF accordingly.
+
+#### Data License
+
+CMIP6 data is freely available under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)**. Remember to cite the data appropriately in publications:
+
+```
+Seland, Ø., Bentsen, M., Olivié, D., et al. (2020). NorESM2-LM model output
+prepared for CMIP6. Earth System Grid Federation.
+https://doi.org/10.22033/ESGF/CMIP6.8217
+```
+
+### Obtaining County Shapefiles
+
+See [`utils/README.md`](utils/README.md) for detailed instructions on downloading and preparing US Census TIGER/Line county shapefiles.
+
+**Quick steps:**
+1. Download from US Census: https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html
+2. Extract to project directory
+3. Run: `uv run python utils/split_counties_by_region.py`
+
 ## Storage Architecture
 
-All climate data is stored on an **external SSD drive** (`/Volumes/SSD1TB/`) and accessed through **symbolic links** to avoid duplicating large datasets in the project directory.
+All climate data is stored on an **external SSD drive** (`/path/to/external/drive/`) and accessed through **symbolic links** to avoid duplicating large datasets in the project directory.
 
 ### Why External Storage?
 
@@ -20,12 +157,12 @@ All climate data is stored on an **external SSD drive** (`/Volumes/SSD1TB/`) and
 ```
 climate-zarr-slr/
 ├── data/                               # Symbolic links to external data
-│   ├── raw_netcdf -> /Volumes/SSD1TB/NorESM2-LM/
-│   ├── climate_outputs -> /Volumes/SSD1TB/climate_outputs/
-│   ├── pr_historical_conus.zarr -> /Volumes/SSD1TB/pr_historical_conus.zarr
-│   ├── tas_historical_conus.zarr -> /Volumes/SSD1TB/tas_historical_conus.zarr
-│   ├── tasmax_historical_conus.zarr -> /Volumes/SSD1TB/tasmax_historical_conus.zarr
-│   └── tasmin_historical_conus.zarr -> /Volumes/SSD1TB/tasmin_historical_conus.zarr
+│   ├── raw_netcdf -> /path/to/external/drive/NorESM2-LM/
+│   ├── climate_outputs -> /path/to/external/drive/climate_outputs/
+│   ├── pr_historical_conus.zarr -> /path/to/external/drive/pr_historical_conus.zarr
+│   ├── tas_historical_conus.zarr -> /path/to/external/drive/tas_historical_conus.zarr
+│   ├── tasmax_historical_conus.zarr -> /path/to/external/drive/tasmax_historical_conus.zarr
+│   └── tasmin_historical_conus.zarr -> /path/to/external/drive/tasmin_historical_conus.zarr
 └── regional_counties/                  # US Census county shapefiles
     ├── alaska_counties.*
     ├── conus_counties.*
@@ -37,7 +174,7 @@ climate-zarr-slr/
 ## Raw NetCDF Data Structure
 
 ### Location
-`/Volumes/SSD1TB/NorESM2-LM/`
+`/path/to/external/drive/NorESM2-LM/`
 
 ### Climate Model
 **NorESM2-LM** (Norwegian Earth System Model - Low Resolution)
@@ -102,7 +239,7 @@ Example: pr_day_NorESM2-LM_historical_r1i1p1f1_gn_1950_v1.1.nc
 ## Processed Data Outputs
 
 ### Location
-`/Volumes/SSD1TB/climate_outputs/`
+`/path/to/external/drive/climate_outputs/`
 
 ### Directory Structure
 ```
@@ -182,7 +319,7 @@ Each CSV has accompanying metadata:
 ## Regional County Shapefiles
 
 ### Location
-`/Users/mihiarc/climate-zarr-slr/regional_counties/`
+`/path/to/project/regional_counties/`
 
 ### Source
 US Census Bureau TIGER/Line Shapefiles (2024)
@@ -306,17 +443,17 @@ cd climate-zarr-slr
 uv install
 
 # 3. Verify external drive is mounted
-ls /Volumes/SSD1TB/NorESM2-LM/
+ls /path/to/external/drive/NorESM2-LM/
 
 # 4. Create symbolic links (if not already present)
 mkdir -p data
 cd data
-ln -s /Volumes/SSD1TB/NorESM2-LM raw_netcdf
-ln -s /Volumes/SSD1TB/climate_outputs climate_outputs
-ln -s /Volumes/SSD1TB/pr_historical_conus.zarr pr_historical_conus.zarr
-ln -s /Volumes/SSD1TB/tas_historical_conus.zarr tas_historical_conus.zarr
-ln -s /Volumes/SSD1TB/tasmax_historical_conus.zarr tasmax_historical_conus.zarr
-ln -s /Volumes/SSD1TB/tasmin_historical_conus.zarr tasmin_historical_conus.zarr
+ln -s /path/to/external/drive/NorESM2-LM raw_netcdf
+ln -s /path/to/external/drive/climate_outputs climate_outputs
+ln -s /path/to/external/drive/pr_historical_conus.zarr pr_historical_conus.zarr
+ln -s /path/to/external/drive/tas_historical_conus.zarr tas_historical_conus.zarr
+ln -s /path/to/external/drive/tasmax_historical_conus.zarr tasmax_historical_conus.zarr
+ln -s /path/to/external/drive/tasmin_historical_conus.zarr tasmin_historical_conus.zarr
 cd ..
 
 # 5. Verify setup
@@ -344,13 +481,13 @@ ls -lah data/
 
 # Re-create links
 rm data/raw_netcdf  # if broken
-ln -s /Volumes/SSD1TB/NorESM2-LM data/raw_netcdf
+ln -s /path/to/external/drive/NorESM2-LM data/raw_netcdf
 ```
 
 **Permission errors:**
 ```bash
 # Ensure external drive is writable
-chmod u+w /Volumes/SSD1TB/
+chmod u+w /path/to/external/drive/
 ```
 
 ## Data Access Examples
@@ -487,10 +624,10 @@ change.plot()
 Once Zarr files are created and validated, raw NetCDF can be archived or deleted:
 ```bash
 # Archive to external storage
-tar -czf NorESM2-LM_backup.tar.gz /Volumes/SSD1TB/NorESM2-LM/
+tar -czf NorESM2-LM_backup.tar.gz /path/to/external/drive/NorESM2-LM/
 
 # Delete raw files (after verifying Zarr works)
-rm -rf /Volumes/SSD1TB/NorESM2-LM/
+rm -rf /path/to/external/drive/NorESM2-LM/
 ```
 **Savings**: ~250GB
 
@@ -538,10 +675,10 @@ Choose relevant scenarios:
 **Suggested backup:**
 ```bash
 # Backup county statistics (small, critical)
-tar -czf county_stats_backup_$(date +%Y%m%d).tar.gz /Volumes/SSD1TB/climate_outputs/stats/
+tar -czf county_stats_backup_$(date +%Y%m%d).tar.gz /path/to/external/drive/climate_outputs/stats/
 
 # Backup Zarr (medium, regeneratable)
-tar -czf zarr_backup_$(date +%Y%m%d).tar.gz /Volumes/SSD1TB/climate_outputs/zarr/
+tar -czf zarr_backup_$(date +%Y%m%d).tar.gz /path/to/external/drive/climate_outputs/zarr/
 
 # Archive raw NetCDF (large, re-downloadable)
 # Store on separate external drive or cloud archive
