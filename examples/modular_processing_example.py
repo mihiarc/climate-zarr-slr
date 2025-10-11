@@ -6,11 +6,10 @@ This example demonstrates how to use the refactored modular architecture
 for processing climate data at the county level.
 """
 
-from pathlib import Path
 from climate_zarr import ModernCountyProcessor
 from climate_zarr.processors import PrecipitationProcessor, TemperatureProcessor
-from climate_zarr.processors.processing_strategies import UltraFastStrategy, VectorizedStrategy
-from climate_zarr.utils import convert_units, create_county_raster
+from climate_zarr.processors.processing_strategies import UltraFastStrategy
+from climate_zarr.utils import convert_units
 from climate_zarr.utils.data_utils import calculate_precipitation_stats
 
 def example_basic_usage():
@@ -89,8 +88,7 @@ def example_utilities():
     print("\n🛠️ Example 4: Using Individual Utilities")
     
     import numpy as np
-    import pandas as pd
-    
+
     # Unit conversion
     temp_kelvin = np.array([273.15, 283.15, 293.15])
     temp_celsius = convert_units(temp_kelvin, "K", "C")

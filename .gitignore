@@ -119,6 +119,10 @@ climate_reports/
 test_reports/
 tl_*_us_county/
 
+# Temporary operational scripts
+scripts/check_2074_files.py
+scripts/continue_ssp245_stage1.sh
+
 # Data files - CSV, TXT, and images
 *.csv
 *.txt
