@@ -2,7 +2,6 @@
 """Precipitation data processor for county-level statistics."""
 
 from pathlib import Path
-from typing import Dict
 import pandas as pd
 import geopandas as gpd
 import xarray as xr
@@ -17,82 +16,78 @@ console = Console()
 
 class PrecipitationProcessor(BaseCountyProcessor):
     """Processor for precipitation data (pr variable)."""
-    
+
     def process_variable_data(
         self,
         data: xr.DataArray,
         gdf: gpd.GeoDataFrame,
         scenario: str,
-        threshold_mm: float = 25.4, # 1 inch
-        **kwargs
+        threshold_mm: float = 25.4,  # 1 inch
+        **kwargs,
     ) -> pd.DataFrame:
         """Process precipitation data for all counties.
-        
+
         Args:
             data: Precipitation data array
             gdf: County geometries
             scenario: Scenario name
             threshold_mm: Precipitation threshold in mm
             **kwargs: Additional parameters
-            
+
         Returns:
             DataFrame with precipitation statistics
         """
         console.print("[blue]Processing precipitation data...[/blue]")
-        
+
         # Convert units from kg/m²/s to mm/day
         pr_data = convert_units(data, "kg/m2/s", "mm/day")
-        
+
         # Standardize coordinates
         pr_data = self._standardize_coordinates(pr_data)
-        
+
         # Select strategy based on region (simple logic: CONUS = chunked, others = vectorized)
-        region = kwargs.get('region', infer_region_from_gdf(gdf))
+        region = kwargs.get("region", infer_region_from_gdf(gdf))
         strategy = get_strategy_for_region(region, gdf, self.n_workers)
-        
+
         # Execute processing with selected strategy
         return strategy.process(
             data=pr_data,
             gdf=gdf,
-            variable='pr',
+            variable="pr",
             scenario=scenario,
             threshold=threshold_mm,
-            n_workers=self.n_workers
+            n_workers=self.n_workers,
         )
-    
-    
+
     def process_zarr_file(
         self,
         zarr_path: Path,
         gdf: gpd.GeoDataFrame,
-        scenario: str = 'historical',
-        threshold_mm: float = 25.4
+        scenario: str = "historical",
+        threshold_mm: float = 25.4,
     ) -> pd.DataFrame:
         """Process a Zarr file containing precipitation data.
-        
+
         Args:
             zarr_path: Path to Zarr dataset
             gdf: County geometries
             scenario: Scenario name
             threshold_mm: Precipitation threshold in mm
-            
+
         Returns:
             DataFrame with precipitation statistics
         """
         console.print(f"[blue]Opening precipitation Zarr dataset:[/blue] {zarr_path}")
-        
+
         # Open with native Zarr chunks to avoid rechunking overhead
         ds = xr.open_zarr(zarr_path)
-        
+
         # Get precipitation data
-        if 'pr' not in ds.data_vars:
+        if "pr" not in ds.data_vars:
             raise ValueError("Precipitation variable 'pr' not found in dataset")
-        
-        pr_data = ds['pr']
-        
+
+        pr_data = ds["pr"]
+
         return self.process_variable_data(
-            data=pr_data,
-            gdf=gdf,
-            scenario=scenario,
-            threshold_mm=threshold_mm
-        ) 
+            data=pr_data, gdf=gdf, scenario=scenario, threshold_mm=threshold_mm
+        )

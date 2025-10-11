@@ -19,9 +19,9 @@ __all__ = [
     "BaseCountyProcessor",
     # Variable processors
     "PrecipitationProcessor",
-    "TemperatureProcessor", 
+    "TemperatureProcessor",
     "TasMaxProcessor",
     "TasMinProcessor",
     # Processing strategies
     "VectorizedStrategy",
-] 
+]
