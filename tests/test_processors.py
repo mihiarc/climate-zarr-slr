@@ -6,16 +6,13 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import xarray as xr
-import rioxarray  # Required for .rio accessor
 from shapely.geometry import Polygon
 from unittest.mock import Mock, patch
 
-from climate_zarr.processors.base_processor import BaseCountyProcessor
 from climate_zarr.processors.precipitation_processor import PrecipitationProcessor
 from climate_zarr.processors.temperature_processor import TemperatureProcessor
 from climate_zarr.processors.tasmax_processor import TasMaxProcessor
 from climate_zarr.processors.tasmin_processor import TasMinProcessor
-from climate_zarr.processors.processing_strategies import VectorizedStrategy
 
 
 @pytest.fixture
@@ -261,7 +258,7 @@ class TestTasMinProcessor:
         processor = TasMinProcessor()
         
         # Create test data
-        test_gdf = gpd.GeoDataFrame({
+        gpd.GeoDataFrame({
             'GEOID': ['12345'],
             'NAME': ['Test County'],
             'STUSPS': ['TX'],

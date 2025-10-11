@@ -16,21 +16,19 @@ Author: Climate Zarr Toolkit
 Date: 2025-08-22
 """
 
-import os
 import sys
 import logging
 import argparse
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Union
 import warnings
 
 import pandas as pd
 import numpy as np
 from rich.console import Console
-from rich.progress import Progress, TaskID, BarColumn, TextColumn, TimeRemainingColumn
+from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 import yaml
 
 # Configure warnings
@@ -417,7 +415,7 @@ class ClimateDataTransformer:
             result_df['name'] = result_df['county_id'].astype(str)
         
         # 3. Ensure required columns exist with appropriate defaults
-        target_columns = [col['name'] for col in self.target_format['columns']]
+        [col['name'] for col in self.target_format['columns']]
         
         for col_spec in self.target_format['columns']:
             col_name = col_spec['name']
@@ -708,7 +706,7 @@ class ClimateDataTransformer:
                 final_data = transformed_data.drop(columns=['region'], errors='ignore')
                 output_path = self.save_results(final_data, validation_results, output_filename)
                 
-                console.print(f"\n[bold green]✅ Transformation complete![/bold green]")
+                console.print("\n[bold green]✅ Transformation complete![/bold green]")
                 console.print(f"Output saved to: {output_path}")
                 
                 return output_path

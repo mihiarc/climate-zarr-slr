@@ -7,7 +7,6 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-import numpy as np
 
 print("Loading temperature data...")
 
@@ -91,7 +90,7 @@ plt.tight_layout()
 output_file = 'climate_outputs/conus_temperature_map.png'
 print(f"Saving map to {output_file}...")
 plt.savefig(output_file, dpi=150, bbox_inches='tight')
-print(f"Temperature map saved successfully!")
+print("Temperature map saved successfully!")
 
 # Create a second map showing temperature range
 fig2, ax2 = plt.subplots(1, 1, figsize=(16, 10))
@@ -120,7 +119,7 @@ ax2.annotate('Greater\nVariability', xy=(-100, 42), fontsize=12, fontweight='bol
 output_file2 = 'climate_outputs/conus_temperature_range_map.png'
 print(f"Saving temperature range map to {output_file2}...")
 plt.savefig(output_file2, dpi=150, bbox_inches='tight')
-print(f"Temperature range map saved successfully!")
+print("Temperature range map saved successfully!")
 
 # Print summary statistics
 print("\n=== Temperature Summary ===")

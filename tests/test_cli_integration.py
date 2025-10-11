@@ -2,9 +2,7 @@
 Integration tests for Climate Zarr CLI commands.
 """
 
-import pytest
 from pathlib import Path
-from typer.testing import CliRunner
 from climate_zarr.climate_cli import app
 
 

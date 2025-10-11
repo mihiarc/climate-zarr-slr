@@ -6,14 +6,10 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import xarray as xr
-import rioxarray  # Required for .rio accessor
 from shapely.geometry import Polygon
-from unittest.mock import Mock, patch
-import tempfile
-from pathlib import Path
+from unittest.mock import patch
 
 from climate_zarr.processors.processing_strategies import VectorizedStrategy
-from climate_zarr.utils.data_utils import calculate_precipitation_stats
 
 
 @pytest.fixture
@@ -250,8 +246,8 @@ class TestStrategyComparison:
         vectorized = VectorizedStrategy()
         
         # Strategy should handle different county sizes
-        small_counties = sample_counties.iloc[:1]
-        large_counties = pd.concat([sample_counties] * 10, ignore_index=True)
+        sample_counties.iloc[:1]
+        pd.concat([sample_counties] * 10, ignore_index=True)
         
         # Should not raise errors with different sizes
         assert vectorized is not None

@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import xarray as xr
-import rioxarray  # Required for .rio accessor
 from shapely.geometry import Polygon
 import tempfile
 import shutil

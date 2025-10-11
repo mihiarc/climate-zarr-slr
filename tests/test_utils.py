@@ -6,15 +6,8 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import xarray as xr
-import rioxarray  # Required for .rio accessor
 from shapely.geometry import Polygon
-from unittest.mock import patch
 
-from climate_zarr.utils import (
-    convert_units, 
-    create_county_raster, 
-    get_time_information
-)
 from climate_zarr.utils.data_utils import (
     convert_units,
     calculate_precipitation_stats,
@@ -445,7 +438,7 @@ class TestSpatialUtils:
         
         # Should raise NoDataInBounds when there's no overlap
         with pytest.raises(Exception):  # rioxarray.exceptions.NoDataInBounds
-            clipped = clip_county_data(da, county_geometry)
+            clip_county_data(da, county_geometry)
         
         # Test coordinate extraction still works
         lats_out, lons_out = get_coordinate_arrays(da)

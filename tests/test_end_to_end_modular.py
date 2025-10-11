@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import xarray as xr
-import rioxarray  # Required for .rio accessor
 from shapely.geometry import Polygon
 import tempfile
 import shutil
@@ -570,7 +569,6 @@ class TestPerformanceIntegration:
     def test_memory_usage_integration(self, sample_counties_shapefile, sample_precipitation_zarr):
         """Test that memory usage is reasonable."""
         import psutil
-        import os
         
         # Get initial memory usage
         process = psutil.Process(os.getpid())

@@ -7,7 +7,6 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-import numpy as np
 
 print("Loading data...")
 
@@ -131,7 +130,7 @@ plt.tight_layout()
 output_file = 'climate_outputs/conus_precipitation_maps.png'
 print(f"Saving map to {output_file}...")
 plt.savefig(output_file, dpi=150, bbox_inches='tight')
-print(f"Map saved successfully!")
+print("Map saved successfully!")
 
 # Also create a simple single map
 fig2, ax = plt.subplots(1, 1, figsize=(16, 10))
@@ -158,7 +157,7 @@ ax.annotate('Wetter\nRegions', xy=(-75, 38), fontsize=12, fontweight='bold',
 output_file2 = 'climate_outputs/conus_precipitation_simple_map.png'
 print(f"Saving simple map to {output_file2}...")
 plt.savefig(output_file2, dpi=150, bbox_inches='tight')
-print(f"Simple map saved successfully!")
+print("Simple map saved successfully!")
 
 # Don't show plot in non-interactive mode
 # plt.show()

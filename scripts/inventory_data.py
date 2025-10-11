@@ -50,7 +50,6 @@ def main():
     print()
 
     total_files = 0
-    total_size_gb = 0
 
     inventory = {}
 

@@ -2,7 +2,7 @@
 """Modern configuration management for climate data processing."""
 
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional
 from pydantic import BaseModel, Field, field_validator
 import os
 from datetime import datetime

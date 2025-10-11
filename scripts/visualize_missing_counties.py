@@ -9,7 +9,6 @@ and which are missing (red) from the processed dataset.
 import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
-from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -35,7 +34,7 @@ def create_missing_counties_map():
     missing_counties = (~counties_shp['has_data']).sum()
     processed_counties_count = counties_shp['has_data'].sum()
     
-    print(f"\nStatistics:")
+    print("\nStatistics:")
     print(f"Total counties: {total_counties}")
     print(f"Processed: {processed_counties_count} ({processed_counties_count/total_counties*100:.1f}%)")
     print(f"Missing: {missing_counties} ({missing_counties/total_counties*100:.1f}%)")

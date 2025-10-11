@@ -11,7 +11,7 @@ from typing import Dict, List, Tuple
 import logging
 import sys
 sys.path.insert(0, '../src')
-from climate_zarr.climate_config import get_config, RegionConfig
+from climate_zarr.climate_config import get_config
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
 from rich.console import Console
 import warnings

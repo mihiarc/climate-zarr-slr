@@ -14,14 +14,10 @@ Features demonstrated:
 """
 
 import subprocess
-import sys
-import time
 from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.columns import Columns
-from rich.text import Text
 
 console = Console()
 

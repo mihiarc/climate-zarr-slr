@@ -2,7 +2,6 @@
 Integration tests for NetCDF to Zarr conversion workflow.
 """
 
-import pytest
 import xarray as xr
 import numpy as np
 from pathlib import Path
@@ -71,12 +70,6 @@ class TestZarrConversionIntegration:
         output_path = zarr_output_dir / "clipped.zarr"
         
         # Define custom bounds for clipping
-        bounds = {
-            "lat_min": 30.0,
-            "lat_max": 40.0,
-            "lon_min": -110.0,
-            "lon_max": -90.0
-        }
         
         # The actual function uses clip_region parameter, not region_bounds
         # For now, we'll skip the clipping test since it expects a region name

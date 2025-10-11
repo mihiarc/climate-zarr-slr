@@ -2,7 +2,7 @@
 """Processing strategy for county-level climate data analysis using precise geometry clipping."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,6 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 
 from ..utils.spatial_utils import (
     get_time_information, 
-    get_coordinate_arrays,
     clip_county_data
 )
 from ..utils.data_utils import calculate_statistics
@@ -91,10 +90,7 @@ class SpatialChunkedStrategy(ProcessingStrategy):
     ) -> pd.DataFrame:
         """Process using spatial chunking with optimal memory utilization."""
         import psutil
-        import threading
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        from shapely.geometry import box
-        import numpy as np
         
         console.print("[yellow]Initializing spatial chunked processing strategy...[/yellow]")
         
@@ -177,7 +173,6 @@ class SpatialChunkedStrategy(ProcessingStrategy):
     def _create_spatial_chunks(self, data: xr.DataArray, gdf: gpd.GeoDataFrame, 
                               target_memory_gb: float, n_workers: int = 4) -> List[List[int]]:
         """Create spatially-aware chunks optimized for memory usage."""
-        from shapely.geometry import Point
         from sklearn.cluster import KMeans
         import numpy as np
         
@@ -354,10 +349,9 @@ class SpatialChunkedStrategy(ProcessingStrategy):
         """Process a single chunk of counties with optimized memory management."""
         import gc
         import threading
-        from ..utils.data_utils import calculate_statistics
         
         # Thread-local storage for chunk processing
-        local_cache = threading.local()
+        threading.local()
         
         try:
             chunk_results = []

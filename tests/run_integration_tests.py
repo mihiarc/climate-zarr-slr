@@ -5,7 +5,6 @@ Runner script for Climate Zarr integration tests.
 
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_tests():

@@ -9,22 +9,17 @@ import xarray as xr
 from pathlib import Path
 from shapely.geometry import Polygon
 import tempfile
-import os
 
 from climate_zarr import ModernCountyProcessor
 from climate_zarr.processors import (
     PrecipitationProcessor,
-    TemperatureProcessor,
-    TasMaxProcessor,
-    TasMinProcessor
+    TemperatureProcessor
 )
 from climate_zarr.processors.processing_strategies import VectorizedStrategy
 from climate_zarr.utils import convert_units, get_time_information
 from climate_zarr.utils.data_utils import (
     calculate_precipitation_stats,
-    calculate_temperature_stats,
-    calculate_tasmax_stats,
-    calculate_tasmin_stats
+    calculate_temperature_stats
 )
 
 

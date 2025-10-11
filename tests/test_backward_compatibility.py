@@ -6,13 +6,11 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import xarray as xr
-import rioxarray  # Required for .rio accessor
 from shapely.geometry import Polygon
 import tempfile
 import shutil
 from pathlib import Path
 import inspect
-from unittest.mock import patch, Mock
 
 from climate_zarr import ModernCountyProcessor
 

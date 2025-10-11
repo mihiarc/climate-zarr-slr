@@ -13,9 +13,8 @@ Features:
 - Regional clipping with built-in boundary definitions
 """
 
-import sys
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 import warnings
 
 import typer
@@ -24,21 +23,18 @@ from rich import print as rprint
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.text import Text
 from rich.layout import Layout
-from rich.columns import Columns
 from rich.prompt import Prompt, Confirm
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from typing_extensions import Annotated
-
-# Suppress warnings for cleaner output
-warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 # Import our existing modules
 from climate_zarr.stack_nc_to_zarr import stack_netcdf_to_zarr, stack_netcdf_to_zarr_hierarchical
 from climate_zarr.county_processor import ModernCountyProcessor
 from climate_zarr.utils.output_utils import get_output_manager
 from climate_zarr.climate_config import get_config
+
+# Suppress warnings for cleaner output
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 # Initialize Rich console and Typer app
 console = Console(highlight=False)
@@ -1007,7 +1003,7 @@ def info():
     
     # Sample NetCDF files
     if nc_files:
-        console.print(f"\n[dim]Sample NetCDF files (showing first 5):[/dim]")
+        console.print("\n[dim]Sample NetCDF files (showing first 5):[/dim]")
         for nc_file in nc_files[:5]:
             console.print(f"  • {nc_file.name}")
         if len(nc_files) > 5:

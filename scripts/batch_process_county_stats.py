@@ -15,13 +15,11 @@ Features:
 - Comprehensive logging and reporting
 """
 
-import os
 import sys
 import time
 import psutil
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-import pandas as pd
+from typing import Dict, List, Tuple
 import numpy as np
 from rich.console import Console
 from rich.table import Table
@@ -35,7 +33,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from climate_zarr.county_processor import ModernCountyProcessor
 # Strategy selection is now handled internally by processors via create_processing_plan
 from climate_zarr.processors.strategy_config import ProcessingConfig
-from climate_zarr.utils.output_utils import get_output_manager
 from climate_zarr.utils.memory_utils import MemoryMonitor
 
 console = Console()
@@ -224,7 +221,7 @@ class BatchCountyProcessor:
                 # The processors now handle strategy selection internally via create_processing_plan
                 # We just need to display what strategy will be used
                 if strategy_name == 'SpatialChunked':
-                    console.print(f"[cyan]Strategy: SpatialChunked (parallel processing)[/cyan]")
+                    console.print("[cyan]Strategy: SpatialChunked (parallel processing)[/cyan]")
                     console.print(f"[cyan]Memory target: {self.target_memory_usage*100:.0f}% utilization[/cyan]")
                     console.print(f"[cyan]Workers: {self.n_workers}[/cyan]")
                 else:
@@ -326,7 +323,7 @@ class BatchCountyProcessor:
         successful = len([log for log in self.processing_log if log['success']])
         failed = len(self.failed_datasets)
         
-        console.print(f"\n[bold]Overall Statistics:[/bold]")
+        console.print("\n[bold]Overall Statistics:[/bold]")
         console.print(f"  Total datasets: {total_datasets}")
         console.print(f"  Successfully processed: {successful}")
         console.print(f"  Failed: {failed}")
@@ -361,7 +358,7 @@ class BatchCountyProcessor:
                     strategy_performance[strategy]['total_counties'] += log['stats'].get('counties_processed', 0)
                     strategy_performance[strategy]['peak_memory'].append(log['stats'].get('peak_memory_gb', 0))
             
-            console.print(f"\n[bold]Strategy Usage & Performance:[/bold]")
+            console.print("\n[bold]Strategy Usage & Performance:[/bold]")
             for strategy, count in strategy_counts.items():
                 perf = strategy_performance[strategy]
                 avg_throughput = (perf['total_counties'] / perf['total_time'] * 60) if perf['total_time'] > 0 else 0
@@ -381,13 +378,13 @@ class BatchCountyProcessor:
             else:
                 size_ranges['Large (>1GB)'] += 1
         
-        console.print(f"\n[bold]Dataset Size Distribution:[/bold]")
+        console.print("\n[bold]Dataset Size Distribution:[/bold]")
         for size_range, count in size_ranges.items():
             console.print(f"  {size_range}: {count} datasets")
         
         # Failed datasets
         if self.failed_datasets:
-            console.print(f"\n[bold red]Failed Datasets:[/bold red]")
+            console.print("\n[bold red]Failed Datasets:[/bold red]")
             for failed in self.failed_datasets:
                 console.print(f"  [red]✗[/red] {failed['region']}-{failed['variable']}: {failed['error']}")
         
@@ -425,7 +422,7 @@ class BatchCountyProcessor:
                     proc_time
                 )
             
-            console.print(f"\n")
+            console.print("\n")
             console.print(table)
         
         console.print("\n" + "="*80)
@@ -441,14 +438,14 @@ class BatchCountyProcessor:
         
         # Check system resources
         memory_info = psutil.virtual_memory()
-        console.print(f"\n[bold]System Resources:[/bold]")
+        console.print("\n[bold]System Resources:[/bold]")
         console.print(f"  Available memory: {memory_info.available / (1024**3):.2f} GB")
         console.print(f"  Total memory: {memory_info.total / (1024**3):.2f} GB")
         console.print(f"  CPU cores: {psutil.cpu_count()}")
         console.print(f"  Workers: {self.n_workers}")
         
         # Discover datasets
-        console.print(f"\n[yellow]Discovering Zarr datasets...[/yellow]")
+        console.print("\n[yellow]Discovering Zarr datasets...[/yellow]")
         datasets = self.discover_datasets()
         
         if not datasets:
@@ -474,12 +471,12 @@ class BatchCountyProcessor:
             )
             total_size += dataset['size_gb']
         
-        console.print(f"\n")
+        console.print("\n")
         console.print(plan_table)
         console.print(f"\n[bold]Total size to process: {total_size:.2f} GB[/bold]")
         
         # Process each dataset
-        console.print(f"\n[bold green]Starting batch processing...[/bold green]")
+        console.print("\n[bold green]Starting batch processing...[/bold green]")
         
         with Progress(
             SpinnerColumn(),

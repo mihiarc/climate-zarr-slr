@@ -9,7 +9,6 @@ This script monitors:
 - Processing speed estimates
 """
 
-import os
 import time
 import psutil
 from pathlib import Path
@@ -87,7 +86,7 @@ def display_progress(stats, expected_total=20):
     memory = psutil.virtual_memory()
     cpu_percent = psutil.cpu_percent(interval=1)
     
-    console.print(f"\n[bold]System Status:[/bold]")
+    console.print("\n[bold]System Status:[/bold]")
     console.print(f"  CPU Usage: {cpu_percent:.1f}%")
     console.print(f"  Memory Usage: {memory.percent:.1f}% ({memory.used / (1024**3):.1f} GB / {memory.total / (1024**3):.1f} GB)")
     console.print(f"  Available Memory: {memory.available / (1024**3):.1f} GB")
@@ -96,7 +95,7 @@ def display_progress(stats, expected_total=20):
     total_files = stats.get('total_files', 0)
     progress_pct = (total_files / expected_total) * 100 if expected_total > 0 else 0
     
-    console.print(f"\n[bold]Processing Progress:[/bold]")
+    console.print("\n[bold]Processing Progress:[/bold]")
     console.print(f"  Completed: {total_files} / {expected_total} datasets ({progress_pct:.1f}%)")
     console.print(f"  Total output size: {stats.get('total_size_mb', 0):.1f} MB")
     
@@ -132,7 +131,7 @@ def display_progress(stats, expected_total=20):
                     )
         
         if table.rows:
-            console.print(f"\n")
+            console.print("\n")
             console.print(table)
     
     # Expected datasets
@@ -150,7 +149,7 @@ def display_progress(stats, expected_total=20):
             for scenario in scenarios.keys():
                 completed_datasets.add(f"{region.upper()}-{variable.upper()}")
     
-    console.print(f"\n[bold]Remaining Datasets:[/bold]")
+    console.print("\n[bold]Remaining Datasets:[/bold]")
     remaining = [ds for ds in expected_datasets if ds not in completed_datasets]
     if remaining:
         for i, dataset in enumerate(remaining[:10]):  # Show first 10

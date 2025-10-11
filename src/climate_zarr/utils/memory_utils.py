@@ -63,7 +63,7 @@ class MemoryMonitor:
             # Clear numpy's temporary array cache if it exists
             if hasattr(np, '_NoValue'):
                 np._NoValue = None
-        except:
+        except Exception:
             pass
 
 
