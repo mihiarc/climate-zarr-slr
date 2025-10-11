@@ -85,7 +85,7 @@ for var, scenario, filename, local_path in corrupted_files:
             try:
                 ds = xr.open_dataset(local_path)
                 ds.close()
-                print(f"  ✅ Downloaded and verified")
+                print("  ✅ Downloaded and verified")
                 fixed += 1
             except Exception as e:
                 print(f"  ❌ Downloaded but still corrupted: {str(e)[:60]}")
@@ -94,7 +94,7 @@ for var, scenario, filename, local_path in corrupted_files:
             print(f"  ❌ Download failed: {result.stderr[:100]}")
             failed += 1
     except subprocess.TimeoutExpired:
-        print(f"  ❌ Download timeout")
+        print("  ❌ Download timeout")
         failed += 1
     except Exception as e:
         print(f"  ❌ Error: {str(e)[:100]}")
@@ -102,7 +102,7 @@ for var, scenario, filename, local_path in corrupted_files:
 
 print()
 print("=" * 70)
-print(f"REPAIR SUMMARY")
+print("REPAIR SUMMARY")
 print("=" * 70)
 print(f"Fixed: {fixed}/{len(corrupted_files)}")
 print(f"Failed: {failed}/{len(corrupted_files)}")

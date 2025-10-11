@@ -105,7 +105,7 @@ def main():
         print(f"❌ Missing scenarios: {', '.join(missing_scenarios)}")
 
     print(f"\n📁 Total NetCDF files: {total_files}")
-    print(f"💾 Total storage used: Check individual sizes above")
+    print("💾 Total storage used: Check individual sizes above")
 
     # Expected files per scenario
     expected_per_scenario = 86  # Files per variable (2015-2100)
