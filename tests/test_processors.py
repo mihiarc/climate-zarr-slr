@@ -106,7 +106,9 @@ class TestPrecipitationProcessor:
         assert hasattr(processor, "prepare_shapefile")
         assert hasattr(processor, "close")
 
-    @pytest.mark.skip(reason="Mocking issue with strategy pattern - covered by integration tests")
+    @pytest.mark.skip(
+        reason="Mocking issue with strategy pattern - covered by integration tests"
+    )
     def test_process_variable_data(self, sample_gdf, sample_xarray_data):
         """Test precipitation data processing."""
         processor = PrecipitationProcessor(n_workers=2)
@@ -183,7 +185,9 @@ class TestTemperatureProcessor:
         # The architecture now directly instantiates VectorizedStrategy
         assert not hasattr(processor, "_select_processing_strategy")
 
-    @pytest.mark.skip(reason="Mocking issue with strategy pattern - covered by integration tests")
+    @pytest.mark.skip(
+        reason="Mocking issue with strategy pattern - covered by integration tests"
+    )
     def test_process_variable_data(self, sample_gdf, sample_xarray_data):
         """Test temperature data processing."""
         processor = TemperatureProcessor(n_workers=2)
