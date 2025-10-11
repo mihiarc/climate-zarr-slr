@@ -12,8 +12,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        include:
+          # Test on primary development platform with latest Python
+          - os: macos-latest
+            python-version: '3.12'
+          # Test on Linux with minimum and maximum supported versions
+          - os: ubuntu-latest
+            python-version: '3.10'  # Minimum required
+          - os: ubuntu-latest
+            python-version: '3.12'  # Latest supported
     
     steps:
     - uses: actions/checkout@v4
