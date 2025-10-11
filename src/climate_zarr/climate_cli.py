@@ -259,7 +259,7 @@ def create_zarr(
         typer.Option(
             "--interactive", "-i", help="Use interactive prompts for missing options"
         ),
-    ] = True,
+    ] = False,
 ):
     """
     🗜️ Convert NetCDF files to optimized Zarr format.
@@ -400,7 +400,7 @@ def county_stats(
         typer.Option(
             "--interactive", "-i", help="Use interactive prompts for missing options"
         ),
-    ] = True,
+    ] = False,
 ):
     """
     📈 Calculate detailed climate statistics by county for a specific region.
