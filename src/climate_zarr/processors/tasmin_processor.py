@@ -16,77 +16,76 @@ console = Console()
 
 class TasMinProcessor(BaseCountyProcessor):
     """Processor for daily minimum temperature data (tasmin variable)."""
-    
+
     def process_variable_data(
-        self,
-        data: xr.DataArray,
-        gdf: gpd.GeoDataFrame,
-        scenario: str,
-        **kwargs
+        self, data: xr.DataArray, gdf: gpd.GeoDataFrame, scenario: str, **kwargs
     ) -> pd.DataFrame:
         """Process daily minimum temperature data for all counties.
-        
+
         Args:
             data: Daily minimum temperature data array
             gdf: County geometries
             scenario: Scenario name
             **kwargs: Additional parameters
-            
+
         Returns:
             DataFrame with daily minimum temperature statistics
         """
         console.print("[blue]Processing daily minimum temperature data...[/blue]")
-        
+
         # Convert units from Kelvin to Celsius
         tasmin_data = convert_units(data, "K", "C")
-        
+
         # Standardize coordinates
         tasmin_data = self._standardize_coordinates(tasmin_data)
-        
+
         # Select strategy based on region (simple logic: CONUS = chunked, others = vectorized)
-        region = kwargs.get('region', infer_region_from_gdf(gdf))
+        region = kwargs.get("region", infer_region_from_gdf(gdf))
         strategy = get_strategy_for_region(region, gdf, self.n_workers)
-        
+
         # Process the data (no threshold needed for tasmin)
         return strategy.process(
             data=tasmin_data,
             gdf=gdf,
-            variable='tasmin',
+            variable="tasmin",
             scenario=scenario,
             threshold=0.0,  # Not used for tasmin
-            n_workers=self.n_workers
+            n_workers=self.n_workers,
         )
-    
-    
+
     def process_zarr_file(
         self,
         zarr_path: Path,
         gdf: gpd.GeoDataFrame,
-        scenario: str = 'historical',
+        scenario: str = "historical",
     ) -> pd.DataFrame:
         """Process a Zarr file containing daily minimum temperature data.
-        
+
         Args:
             zarr_path: Path to Zarr dataset
             gdf: County geometries
             scenario: Scenario name
-            
+
         Returns:
             DataFrame with daily minimum temperature statistics
         """
-        console.print(f"[blue]Opening daily minimum temperature Zarr dataset:[/blue] {zarr_path}")
-        
+        console.print(
+            f"[blue]Opening daily minimum temperature Zarr dataset:[/blue] {zarr_path}"
+        )
+
         # Open with native Zarr chunks to avoid rechunking overhead
         ds = xr.open_zarr(zarr_path)
-        
+
         # Get daily minimum temperature data
-        if 'tasmin' not in ds.data_vars:
-            raise ValueError("Daily minimum temperature variable 'tasmin' not found in dataset")
-        
-        tasmin_data = ds['tasmin']
-        
+        if "tasmin" not in ds.data_vars:
+            raise ValueError(
+                "Daily minimum temperature variable 'tasmin' not found in dataset"
+            )
+
+        tasmin_data = ds["tasmin"]
+
         return self.process_variable_data(
             data=tasmin_data,
             gdf=gdf,
             scenario=scenario,
-        ) 
+        )

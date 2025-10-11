@@ -77,7 +77,7 @@ for var, scenario, filename, local_path in corrupted_files:
             ["curl", "-f", "-s", "-S", "-o", str(local_path), aws_url],
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=300,
         )
 
         if result.returncode == 0:

@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 
+
 def get_file_count_and_size(directory):
     """Get count and total size of NetCDF files in directory."""
     if not os.path.exists(directory):
@@ -19,17 +20,13 @@ def get_file_count_and_size(directory):
     count = len(nc_files)
 
     # Get total size
-    result = subprocess.run(
-        ["du", "-sh", directory],
-        capture_output=True,
-        text=True
-    )
+    result = subprocess.run(["du", "-sh", directory], capture_output=True, text=True)
     size = result.stdout.split()[0] if result.returncode == 0 else "N/A"
 
     # Extract years from filenames
     years = []
     for f in nc_files:
-        year_str = ''.join(filter(str.isdigit, f.stem[-4:]))
+        year_str = "".join(filter(str.isdigit, f.stem[-4:]))
         if year_str and len(year_str) == 4:
             years.append(int(year_str))
 
@@ -37,6 +34,7 @@ def get_file_count_and_size(directory):
     last_year = max(years) if years else None
 
     return count, size, first_year, last_year
+
 
 def main():
     base_path = Path("/Volumes/SSD1TB/NorESM2-LM")
@@ -64,18 +62,20 @@ def main():
             count, size, first, last = get_file_count_and_size(dir_path)
 
             inventory[var][scenario] = {
-                'count': count,
-                'size': size,
-                'first_year': first,
-                'last_year': last,
-                'exists': count > 0
+                "count": count,
+                "size": size,
+                "first_year": first,
+                "last_year": last,
+                "exists": count > 0,
             }
 
             if count > 0:
                 year_range = f"{first}-{last}" if first and last else "unknown"
                 status = "✅"
                 total_files += count
-                print(f"  {status} {scenario:8s}: {count:3d} files, {size:>6s} total, years {year_range}")
+                print(
+                    f"  {status} {scenario:8s}: {count:3d} files, {size:>6s} total, years {year_range}"
+                )
             else:
                 status = "❌"
                 print(f"  {status} {scenario:8s}: NOT FOUND")
@@ -89,17 +89,23 @@ def main():
     incomplete_scenarios = []
 
     for scenario in scenarios:
-        vars_present = sum(1 for var in variables if inventory[var][scenario]['exists'])
+        vars_present = sum(1 for var in variables if inventory[var][scenario]["exists"])
         if vars_present == 4:
             complete_scenarios.append(scenario)
         elif vars_present > 0:
             incomplete_scenarios.append(scenario)
 
-    print(f"\n✅ Complete scenarios (all 4 variables): {', '.join(complete_scenarios) if complete_scenarios else 'None'}")
+    print(
+        f"\n✅ Complete scenarios (all 4 variables): {', '.join(complete_scenarios) if complete_scenarios else 'None'}"
+    )
     if incomplete_scenarios:
         print(f"⚠️  Incomplete scenarios: {', '.join(incomplete_scenarios)}")
 
-    missing_scenarios = [s for s in scenarios if s not in complete_scenarios and s not in incomplete_scenarios]
+    missing_scenarios = [
+        s
+        for s in scenarios
+        if s not in complete_scenarios and s not in incomplete_scenarios
+    ]
     if missing_scenarios:
         print(f"❌ Missing scenarios: {', '.join(missing_scenarios)}")
 
@@ -110,7 +116,9 @@ def main():
     expected_per_scenario = 86  # Files per variable (2015-2100)
     expected_total = len(variables) * len(scenarios) * expected_per_scenario
 
-    print(f"\n📈 Completeness: {total_files}/{expected_total} expected files ({100*total_files/expected_total:.1f}%)")
+    print(
+        f"\n📈 Completeness: {total_files}/{expected_total} expected files ({100 * total_files / expected_total:.1f}%)"
+    )
 
     # AWS availability
     print("\n" + "=" * 80)
@@ -141,11 +149,17 @@ def main():
     for var in variables:
         for scenario in scenarios:
             info = inventory[var][scenario]
-            if not info['exists']:
+            if not info["exists"]:
                 missing_items.append((var, scenario, "Entire scenario missing"))
-            elif info['count'] != expected_per_scenario:
-                missing_count = expected_per_scenario - info['count']
-                missing_items.append((var, scenario, f"{missing_count} files missing (have {info['count']}/{expected_per_scenario})"))
+            elif info["count"] != expected_per_scenario:
+                missing_count = expected_per_scenario - info["count"]
+                missing_items.append(
+                    (
+                        var,
+                        scenario,
+                        f"{missing_count} files missing (have {info['count']}/{expected_per_scenario})",
+                    )
+                )
 
     if missing_items:
         for var, scenario, reason in missing_items:
@@ -154,6 +168,7 @@ def main():
         print("  ✅ No missing data - all scenarios complete!")
 
     print("\n" + "=" * 80)
+
 
 if __name__ == "__main__":
     main()

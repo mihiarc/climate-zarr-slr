@@ -16,87 +16,94 @@ console = Console()
 
 class TasMaxProcessor(BaseCountyProcessor):
     """Processor for daily maximum temperature data (tasmax variable)."""
-    
+
     def process_variable_data(
         self,
         data: xr.DataArray,
         gdf: gpd.GeoDataFrame,
         scenario: str,
         threshold_temp_c: float = 32.2,  # Default: 90°F converted to Celsius
-        **kwargs
+        **kwargs,
     ) -> pd.DataFrame:
         """Process daily maximum temperature data for all counties.
-        
+
         Args:
             data: Daily maximum temperature data array
             gdf: County geometries
             scenario: Scenario name
             threshold_temp_c: Temperature threshold in Celsius for hot days
             **kwargs: Additional parameters
-            
+
         Returns:
             DataFrame with daily maximum temperature statistics
         """
         console.print("[blue]Processing daily maximum temperature data...[/blue]")
-        
+
         # Convert units from Kelvin to Celsius
         tasmax_data = convert_units(data, "K", "C")
-        
+
         # Handle threshold conversion if it looks like Fahrenheit
-        if abs(threshold_temp_c - 90.0) < 0.1:  # Check if threshold is likely in Fahrenheit
+        if (
+            abs(threshold_temp_c - 90.0) < 0.1
+        ):  # Check if threshold is likely in Fahrenheit
             threshold_temp_c = convert_units(threshold_temp_c, "F", "C")
-            console.print(f"[yellow]Converting threshold from 90°F to {threshold_temp_c:.1f}°C[/yellow]")
-        
+            console.print(
+                f"[yellow]Converting threshold from 90°F to {threshold_temp_c:.1f}°C[/yellow]"
+            )
+
         # Standardize coordinates
         tasmax_data = self._standardize_coordinates(tasmax_data)
-        
+
         # Select strategy based on region (simple logic: CONUS = chunked, others = vectorized)
-        region = kwargs.get('region', infer_region_from_gdf(gdf))
+        region = kwargs.get("region", infer_region_from_gdf(gdf))
         strategy = get_strategy_for_region(region, gdf, self.n_workers)
-        
+
         # Process the data
         return strategy.process(
             data=tasmax_data,
             gdf=gdf,
-            variable='tasmax',
+            variable="tasmax",
             scenario=scenario,
             threshold=threshold_temp_c,
-            n_workers=self.n_workers
+            n_workers=self.n_workers,
         )
-    
-    
+
     def process_zarr_file(
         self,
         zarr_path: Path,
         gdf: gpd.GeoDataFrame,
-        scenario: str = 'historical',
-        threshold_temp_c: float = 32.2
+        scenario: str = "historical",
+        threshold_temp_c: float = 32.2,
     ) -> pd.DataFrame:
         """Process a Zarr file containing daily maximum temperature data.
-        
+
         Args:
             zarr_path: Path to Zarr dataset
             gdf: County geometries
             scenario: Scenario name
             threshold_temp_c: Temperature threshold in Celsius
-            
+
         Returns:
             DataFrame with daily maximum temperature statistics
         """
-        console.print(f"[blue]Opening daily maximum temperature Zarr dataset:[/blue] {zarr_path}")
-        
+        console.print(
+            f"[blue]Opening daily maximum temperature Zarr dataset:[/blue] {zarr_path}"
+        )
+
         # Open with native Zarr chunks to avoid rechunking overhead
         ds = xr.open_zarr(zarr_path)
-        
+
         # Get daily maximum temperature data
-        if 'tasmax' not in ds.data_vars:
-            raise ValueError("Daily maximum temperature variable 'tasmax' not found in dataset")
-        
-        tasmax_data = ds['tasmax']
-        
+        if "tasmax" not in ds.data_vars:
+            raise ValueError(
+                "Daily maximum temperature variable 'tasmax' not found in dataset"
+            )
+
+        tasmax_data = ds["tasmax"]
+
         return self.process_variable_data(
             data=tasmax_data,
             gdf=gdf,
             scenario=scenario,
-            threshold_temp_c=threshold_temp_c
-        ) 
+            threshold_temp_c=threshold_temp_c,
+        )
