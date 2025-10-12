@@ -393,7 +393,9 @@ def main():
     nc_files = []
     for path in args.files:
         if path.is_dir():
-            nc_files.extend(sorted(path.glob("*.nc")))
+            # Get all .nc files but exclude macOS resource fork files (._*)
+            all_nc_files = sorted(path.glob("*.nc"))
+            nc_files.extend([f for f in all_nc_files if not f.name.startswith("._")])
         elif path.exists():
             nc_files.append(path)
 

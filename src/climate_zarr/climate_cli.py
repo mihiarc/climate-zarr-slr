@@ -302,7 +302,9 @@ def create_zarr(
     # Collect NetCDF files
     nc_files = []
     if input_path.is_dir():
-        nc_files = list(input_path.glob("*.nc"))
+        # Get all .nc files but exclude macOS resource fork files (._*)
+        all_nc_files = list(input_path.glob("*.nc"))
+        nc_files = [f for f in all_nc_files if not f.name.startswith("._")]
     elif input_path.is_file() and input_path.suffix == ".nc":
         nc_files = [input_path]
     else:
