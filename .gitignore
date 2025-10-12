@@ -123,6 +123,11 @@ tl_*_us_county/
 scripts/check_2074_files.py
 scripts/continue_ssp245_stage1.sh
 
+# Temporary debugging/testing files in root (not in tests/)
+/test_*.py
+/cleanup_*.sh
+/debug_*.py
+
 # Data files - CSV, TXT, and images
 *.csv
 *.txt
