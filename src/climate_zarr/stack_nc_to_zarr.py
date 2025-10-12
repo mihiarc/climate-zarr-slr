@@ -9,6 +9,13 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 import numcodecs
 
+# Import robust file discovery
+try:
+    from climate_zarr.utils.file_discovery import discover_netcdf_files
+    HAS_FILE_DISCOVERY = True
+except ImportError:
+    HAS_FILE_DISCOVERY = False
+
 
 console = Console()
 
@@ -389,13 +396,24 @@ def main():
 
     args = parser.parse_args()
 
-    # Collect files
+    # Collect files using robust discovery when available
     nc_files = []
     for path in args.files:
         if path.is_dir():
-            # Get all .nc files but exclude macOS resource fork files (._*)
-            all_nc_files = sorted(path.glob("*.nc"))
-            nc_files.extend([f for f in all_nc_files if not f.name.startswith("._")])
+            if HAS_FILE_DISCOVERY:
+                # Use robust file discovery with validation
+                discovered = discover_netcdf_files(
+                    directory=path,
+                    pattern="*.nc",
+                    validate=True,
+                    verbose=True,
+                    fail_on_invalid=False
+                )
+                nc_files.extend(discovered)
+            else:
+                # Fallback to simple glob with filtering
+                all_nc_files = sorted(path.glob("*.nc"))
+                nc_files.extend([f for f in all_nc_files if not f.name.startswith("._")])
         elif path.exists():
             nc_files.append(path)
 

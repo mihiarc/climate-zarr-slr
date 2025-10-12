@@ -34,6 +34,7 @@ from climate_zarr.stack_nc_to_zarr import (
 )
 from climate_zarr.county_processor import ModernCountyProcessor
 from climate_zarr.utils.output_utils import get_output_manager
+from climate_zarr.utils.file_discovery import discover_netcdf_files
 from climate_zarr.climate_config import get_config
 
 # Suppress warnings for cleaner output
@@ -299,12 +300,20 @@ def create_zarr(
     if region:
         region = validate_region(region)
 
-    # Collect NetCDF files
+    # Collect NetCDF files using robust discovery
     nc_files = []
     if input_path.is_dir():
-        # Get all .nc files but exclude macOS resource fork files (._*)
-        all_nc_files = list(input_path.glob("*.nc"))
-        nc_files = [f for f in all_nc_files if not f.name.startswith("._")]
+        try:
+            nc_files = discover_netcdf_files(
+                directory=input_path,
+                pattern="*.nc",
+                validate=True,
+                verbose=True,
+                fail_on_invalid=False
+            )
+        except Exception as e:
+            rprint(f"[red]❌ Error discovering NetCDF files: {e}[/red]")
+            raise typer.Exit(1)
     elif input_path.is_file() and input_path.suffix == ".nc":
         nc_files = [input_path]
     else:
@@ -312,7 +321,7 @@ def create_zarr(
         raise typer.Exit(1)
 
     if not nc_files:
-        rprint(f"[red]❌ No .nc files found in directory: {input_path}[/red]")
+        rprint(f"[red]❌ No valid .nc files found in directory: {input_path}[/red]")
         raise typer.Exit(1)
 
     # Parse chunks if provided
