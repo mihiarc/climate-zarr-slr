@@ -87,7 +87,7 @@ class ClimateDataTransformer:
                 },
             },
             "tas": {
-                "source_pattern": "*tas*stats*.csv",
+                "source_pattern": "*_tas_*stats*.csv",  # More specific: underscore before and after "tas"
                 "key_columns": ["mean_annual_temp_c"],
                 "target_mappings": {"mean_annual_temp_c": "annual_mean_temp"},
             },
