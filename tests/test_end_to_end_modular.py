@@ -13,7 +13,6 @@ from pathlib import Path
 import os
 
 from climate_zarr.county_processor import ModernCountyProcessor
-from climate_zarr import county_stats_cli
 
 
 @pytest.fixture
@@ -447,77 +446,6 @@ class TestCountyProcessorIntegration:
             assert len(results) > 0
 
 
-class TestCLIIntegration:
-    """Test CLI integration with the modular system."""
-
-    def test_cli_module_exists(self):
-        """Test CLI module exists."""
-        assert hasattr(county_stats_cli, "main")
-        assert callable(county_stats_cli.main)
-
-    def test_cli_precipitation_processing(
-        self, sample_counties_shapefile, sample_precipitation_zarr, temp_dir
-    ):
-        """Test CLI precipitation processing using direct processor call."""
-        output_path = Path(temp_dir) / "cli_precip_results.csv"
-
-        # Test the processor that the CLI would use
-        with ModernCountyProcessor(n_workers=2) as processor:
-            gdf = processor.prepare_shapefile(sample_counties_shapefile)
-
-            results = processor.process_zarr_data(
-                zarr_path=sample_precipitation_zarr,
-                gdf=gdf,
-                variable="pr",
-                scenario="ssp370",
-                threshold=25.4,
-                chunk_by_county=False,
-            )
-
-            # Save results like CLI would
-            results.to_csv(output_path, index=False)
-
-        # Check output file
-        assert output_path.exists()
-
-        # Load and validate results
-        results_loaded = pd.read_csv(output_path)
-        assert len(results_loaded) > 0
-        assert "total_annual_precip_mm" in results_loaded.columns
-        assert set(results_loaded["scenario"].unique()) == {"ssp370"}
-
-    def test_cli_temperature_processing(
-        self, sample_counties_shapefile, sample_temperature_zarr, temp_dir
-    ):
-        """Test CLI temperature processing using direct processor call."""
-        output_path = Path(temp_dir) / "cli_temp_results.csv"
-
-        # Test the processor that the CLI would use
-        with ModernCountyProcessor(n_workers=2) as processor:
-            gdf = processor.prepare_shapefile(sample_counties_shapefile)
-
-            results = processor.process_zarr_data(
-                zarr_path=sample_temperature_zarr,
-                gdf=gdf,
-                variable="tas",
-                scenario="historical",
-                threshold=0.0,  # Not used for temperature
-                chunk_by_county=True,
-            )
-
-            # Save results like CLI would
-            results.to_csv(output_path, index=False)
-
-        # Check output file
-        assert output_path.exists()
-
-        # Load and validate results
-        results_loaded = pd.read_csv(output_path)
-        assert len(results_loaded) > 0
-        assert "mean_annual_temp_c" in results_loaded.columns
-        assert set(results_loaded["scenario"].unique()) == {"historical"}
-
-
 class TestBackwardCompatibilityIntegration:
     """Test that the modular system maintains backward compatibility."""
 
@@ -530,10 +458,15 @@ class TestBackwardCompatibilityIntegration:
 
         # Test new modular imports
         from climate_zarr.county_processor import ModernCountyProcessor
-        from climate_zarr import county_stats_cli
 
         assert ModernCountyProcessor is not None
-        assert county_stats_cli is not None
+
+        # Test pipeline API imports
+        from climate_zarr import run_pipeline, PipelineConfig, PipelineResult
+
+        assert run_pipeline is not None
+        assert PipelineConfig is not None
+        assert PipelineResult is not None
 
         # Test processor imports
         from climate_zarr.processors import (

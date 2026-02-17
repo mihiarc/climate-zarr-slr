@@ -348,7 +348,7 @@ wheels = [
 
 [[package]]
 name = "climate-zarr-slr"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "bottleneck" },
@@ -369,13 +369,11 @@ dependencies = [
     { name = "pandas" },
     { name = "pydantic" },
     { name = "pyogrio" },
-    { name = "questionary" },
     { name = "rich" },
     { name = "rioxarray" },
     { name = "s3fs" },
     { name = "scikit-learn" },
     { name = "shapely" },
-    { name = "typer" },
     { name = "virtualizarr", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "virtualizarr", version = "1.3.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "xarray" },
@@ -426,14 +424,12 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.1.0" },
     { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.11.0" },
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.3.0" },
-    { name = "questionary", specifier = ">=2.1.0" },
     { name = "rich", specifier = ">=13.0.0" },
     { name = "rioxarray", specifier = ">=0.15.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "s3fs", specifier = ">=2024.1.0" },
     { name = "scikit-learn", specifier = ">=1.7.1" },
     { name = "shapely", specifier = ">=2.0.0" },
-    { name = "typer", specifier = ">=0.12.0" },
     { name = "virtualizarr", specifier = ">=1.0.0" },
     { name = "xarray", specifier = ">=2024.1.0" },
     { name = "xarray-datatree", specifier = ">=0.0.13" },
@@ -1307,6 +1303,16 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/71/96/d5d8859a6dac29f8ebc815ff8e75770bd513db9f08d7a711e21ae562a948/netCDF4-1.7.2-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:30d20e56b9ba2c48884eb89c91b63e6c0612b4927881707e34402719153ef17f", size = 9378149 },
     { url = "https://files.pythonhosted.org/packages/d1/80/b9c19f1bb4ac6c5fa6f94a4f278bc68a778473d1814a86a375d7cffa193a/netCDF4-1.7.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8d6bfd38ba0bde04d56f06c1554714a2ea9dab75811c89450dc3ec57a9d36b80", size = 9254471 },
     { url = "https://files.pythonhosted.org/packages/66/b5/e04550fd53de57001dbd5a87242da7ff784c80790adc48897977b6ccf891/netCDF4-1.7.2-cp313-cp313-win_amd64.whl", hash = "sha256:5c5fbee6134ee1246c397e1508e5297d825aa19221fdf3fa8dc9727ad824d7a5", size = 6990521 },
+    { url = "https://files.pythonhosted.org/packages/d6/dd/c713bfe9aa122fe2d1e3c9320fc436b5ad922c93df24d707d9fffb66b0e2/netcdf4-1.7.2-cp310-cp310-macosx_13_0_x86_64.whl", hash = "sha256:16c3ba053930ed990e58827de6ab03184e407549004fb77438b98e5777e8cf3b", size = 2803405 },
+    { url = "https://files.pythonhosted.org/packages/75/b7/6b66ad69d034dc81ee2a1617ebd892cf25ff415dc7aa003323884c4a77f0/netcdf4-1.7.2-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:142c9ed2db8a87a15ae0530c8a99f4f045435b0f495df733e9f111995e389d4f", size = 2417569 },
+    { url = "https://files.pythonhosted.org/packages/50/e4/7238549f0625042f8d94ec2f58977bb186a8e2acf4d65b2ad1de2a58d672/netcdf4-1.7.2-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:76cb3bbbbe4cd5fca612578eb105c16217380f7f93af2b549e8f38296bc906bb", size = 9682157 },
+    { url = "https://files.pythonhosted.org/packages/49/3c/1129ea3943f6f5736be08c2d79ca5965d0a55adbfc38f313a59938a7a62a/netcdf4-1.7.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:835ae7bcef666c967241baeeee9bef9376ddb7527297b24735597131f6f628e2", size = 9520752 },
+    { url = "https://files.pythonhosted.org/packages/0b/eb/144709b60d89eb8995236f49a4e446be87f15b0d63f05dbda55e1315dba3/netcdf4-1.7.2-cp310-cp310-win_amd64.whl", hash = "sha256:73bd7eda3cefb04c4076e76911f652f5ed56bf434e0a3958e367932953437557", size = 7215191 },
+    { url = "https://files.pythonhosted.org/packages/84/0a/182bb4fe5639699ba39d558b553b8e6f04fbfea6cf78404c0f21ef149bf7/netcdf4-1.7.2-cp311-abi3-macosx_13_0_x86_64.whl", hash = "sha256:7e81c3c47f2772eab0b93fba8bb05b17b58dce17720e1bed25e9d76551deecd0", size = 2751391 },
+    { url = "https://files.pythonhosted.org/packages/2d/1f/54ac27c791360f7452ca27ed1cb2917946bbe1ea4337c590a5abcef6332d/netcdf4-1.7.2-cp311-abi3-macosx_14_0_arm64.whl", hash = "sha256:cb2791dba37fc98fd1ac4e236c97822909f54efbcdf7f1415c9777810e0a28f4", size = 2387513 },
+    { url = "https://files.pythonhosted.org/packages/5c/5e/9bf3008a9e45c08f4c9fedce4d6f722ef5d970f56a9c5eb375a200dd2b66/netcdf4-1.7.2-cp311-abi3-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bf11480f6b8a5b246818ffff6b4d90481e51f8b9555b41af0c372eb0aaf8b65f", size = 9621674 },
+    { url = "https://files.pythonhosted.org/packages/a1/75/46871e85f2bbfb1efe229623d25d7c9daa17e2e968d5235572b2c8bb53e8/netcdf4-1.7.2-cp311-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1ccc05328a8ff31921b539821791aeb20b054879f3fdf6d1d505bf6422824fec", size = 9453759 },
+    { url = "https://files.pythonhosted.org/packages/cd/10/c52f12297965938d9b9be666ea1f9d8340c2aea31d6909d90aa650847248/netcdf4-1.7.2-cp311-abi3-win_amd64.whl", hash = "sha256:999bfc4acebf400ed724d5e7329e2e768accc7ee1fa1d82d505da782f730301b", size = 7148514 },
 ]
 
 [[package]]
@@ -1648,18 +1654,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/08/39/679ca9b26c7bb2999ff122d50faa301e49af82ca9c066ec061cfbc0c6784/pre_commit-4.2.0.tar.gz", hash = "sha256:601283b9757afd87d40c4c4a9b2b5de9637a8ea02eaff7adc2d0fb4e04841146", size = 193424 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/74/a88bf1b1efeae488a0c0b7bdf71429c313722d1fc0f377537fbe554e6180/pre_commit-4.2.0-py2.py3-none-any.whl", hash = "sha256:a009ca7205f1eb497d10b845e52c838a98b6cdd2102a6c8e4540e94ee75c58bd", size = 220707 },
-]
-
-[[package]]
-name = "prompt-toolkit"
-version = "3.0.51"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "wcwidth" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/bb/6e/9d084c929dfe9e3bfe0c6a47e31f78a25c54627d64a66e884a8bf5474f1c/prompt_toolkit-3.0.51.tar.gz", hash = "sha256:931a162e3b27fc90c86f1b48bb1fb2c528c2761475e57c9c06de13311c7b54ed", size = 428940 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ce/4f/5249960887b1fbe561d9ff265496d170b55a735b76724f10ef19f9e40716/prompt_toolkit-3.0.51-py3-none-any.whl", hash = "sha256:52742911fde84e2d423e2f9a4cf1de7d7ac4e51958f648d9540e0fb8db077b07", size = 387810 },
 ]
 
 [[package]]
@@ -2090,18 +2084,6 @@ wheels = [
 ]
 
 [[package]]
-name = "questionary"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "prompt-toolkit" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a8/b8/d16eb579277f3de9e56e5ad25280fab52fc5774117fb70362e8c2e016559/questionary-2.1.0.tar.gz", hash = "sha256:6302cdd645b19667d8f6e6634774e9538bfcd1aad9be287e743d96cacaf95587", size = 26775 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/3f/11dd4cd4f39e05128bfd20138faea57bec56f9ffba6185d276e3107ba5b2/questionary-2.1.0-py3-none-any.whl", hash = "sha256:44174d237b68bc828e4878c763a9ad6790ee61990e0ae72927694ead57bab8ec", size = 36747 },
-]
-
-[[package]]
 name = "rasterio"
 version = "1.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2428,15 +2410,6 @@ wheels = [
 ]
 
 [[package]]
-name = "shellingham"
-version = "1.5.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/58/15/8b3609fd3830ef7b27b655beb4b4e9c62313a4e8da8c676e142cc210d58e/shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de", size = 10310 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", size = 9755 },
-]
-
-[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2537,21 +2510,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/49/18/e3f902a1d21f14035b5bc6246a8c0f51e0eef562ace3a2cea403c1fb7021/tornado-6.5.1-cp39-abi3-win32.whl", hash = "sha256:e0a36e1bc684dca10b1aa75a31df8bdfed656831489bc1e6a6ebed05dc1ec365", size = 444396 },
     { url = "https://files.pythonhosted.org/packages/7b/09/6526e32bf1049ee7de3bebba81572673b19a2a8541f795d887e92af1a8bc/tornado-6.5.1-cp39-abi3-win_amd64.whl", hash = "sha256:908e7d64567cecd4c2b458075589a775063453aeb1d2a1853eedb806922f568b", size = 444840 },
     { url = "https://files.pythonhosted.org/packages/55/a7/535c44c7bea4578e48281d83c615219f3ab19e6abc67625ef637c73987be/tornado-6.5.1-cp39-abi3-win_arm64.whl", hash = "sha256:02420a0eb7bf617257b9935e2b754d1b63897525d8a289c9d65690d580b4dcf7", size = 443596 },
-]
-
-[[package]]
-name = "typer"
-version = "0.16.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "click" },
-    { name = "rich" },
-    { name = "shellingham" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/8c/7d682431efca5fd290017663ea4588bf6f2c6aad085c7f108c5dbc316e70/typer-0.16.0.tar.gz", hash = "sha256:af377ffaee1dbe37ae9440cb4e8f11686ea5ce4e9bae01b84ae7c63b87f1dd3b", size = 102625 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl", hash = "sha256:1f79bed11d4d02d4310e3c1b7ba594183bcedb0ac73b27a9e5f28f6fb5b98855", size = 46317 },
 ]
 
 [[package]]
@@ -2712,15 +2670,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/51/98/a71366dd1c4883b0c39895a0803b442750ebbbd6a5611ef0d30a9175a0ce/virtualizarr-1.3.2.tar.gz", hash = "sha256:ac3d15cdec201cb471f3c99ec9d5c9d3c97d0f48c0815cd787126b84917b4b63", size = 146650 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/19/af/8d61c35ca50232e845be5161eefadb335e9aa2a8d3b42964d409aed66db5/virtualizarr-1.3.2-py3-none-any.whl", hash = "sha256:b9881be5417b3552d350651a94ece7333d427f01a72b09eec7e918ec975529bc", size = 137890 },
-]
-
-[[package]]
-name = "wcwidth"
-version = "0.2.13"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6c/63/53559446a878410fc5a5974feb13d31d78d752eb18aeba59c7fef1af7598/wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5", size = 101301 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/84/fd2ba7aafacbad3c4201d395674fc6348826569da3c0937e75505ead3528/wcwidth-0.2.13-py2.py3-none-any.whl", hash = "sha256:3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859", size = 34166 },
 ]
 
 [[package]]

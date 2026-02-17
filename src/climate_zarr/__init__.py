@@ -33,6 +33,8 @@ from climate_zarr.stack_nc_to_zarr import (
     generate_hierarchical_zarr_path,
 )
 from climate_zarr.county_processor import ModernCountyProcessor
+from climate_zarr.pipeline import PipelineConfig, PipelineResult, run_pipeline
+from climate_zarr.transform import merge_climate_dataframes
 
 __all__ = [
     # Version info
@@ -51,4 +53,9 @@ __all__ = [
     "stack_netcdf_to_zarr_hierarchical",
     "generate_hierarchical_zarr_path",
     "ModernCountyProcessor",
+    # Pipeline API
+    "run_pipeline",
+    "PipelineConfig",
+    "PipelineResult",
+    "merge_climate_dataframes",
 ]

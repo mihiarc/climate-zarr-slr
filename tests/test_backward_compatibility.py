@@ -94,6 +94,16 @@ class TestImportCompatibility:
         processor = ModernCountyProcessor(n_workers=2)
         assert processor.n_workers == 2
 
+    def test_pipeline_api_imports(self):
+        """Test that the new pipeline API imports work."""
+        from climate_zarr import run_pipeline, PipelineConfig, PipelineResult
+        from climate_zarr import merge_climate_dataframes
+
+        assert run_pipeline is not None
+        assert PipelineConfig is not None
+        assert PipelineResult is not None
+        assert merge_climate_dataframes is not None
+
     def test_new_modular_imports(self):
         """Test that new modular imports work."""
         # Test importing individual processors
