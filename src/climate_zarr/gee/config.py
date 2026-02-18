@@ -47,8 +47,8 @@ class GEEPipelineConfig(BaseModel):
         description="Climate variables to process",
     )
     scenarios: list[str] = Field(
-        default=["ssp370"],
-        description="SSP scenarios to process",
+        default=["ssp245"],
+        description="SSP scenarios to process (GEE has historical, ssp245, ssp585)",
     )
     year_range: tuple[int, int] = Field(
         default=(2015, 2100),

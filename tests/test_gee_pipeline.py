@@ -40,7 +40,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 TEST_MODEL = "NorESM2-LM"
-TEST_SCENARIO = "ssp370"
+TEST_SCENARIO = "ssp245"
 TEST_YEAR = 2020
 TEST_REGION = "conus"
 
