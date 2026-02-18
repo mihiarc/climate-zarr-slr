@@ -27,10 +27,10 @@ class GEEConfig(BaseModel):
         description="GEE FeatureCollection ID for US county boundaries",
     )
     batch_size: int = Field(
-        default=5,
+        default=1,
         ge=1,
         le=20,
-        description="Years per batch to avoid GEE timeouts",
+        description="Years per GEE getInfo() call (CONUS ~3,100 counties × batch_size must stay under 5,000)",
     )
 
 
