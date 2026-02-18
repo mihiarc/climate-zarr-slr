@@ -36,6 +36,14 @@ from climate_zarr.county_processor import ModernCountyProcessor
 from climate_zarr.pipeline import PipelineConfig, PipelineResult, run_pipeline
 from climate_zarr.transform import merge_climate_dataframes
 
+# GEE subpackage (optional — requires earthengine-api)
+try:
+    from climate_zarr.gee import run_gee_pipeline, GEEPipelineConfig, GEEConfig
+
+    _HAS_GEE = True
+except ImportError:
+    _HAS_GEE = False
+
 __all__ = [
     # Version info
     "__version__",
@@ -59,3 +67,6 @@ __all__ = [
     "PipelineResult",
     "merge_climate_dataframes",
 ]
+
+if _HAS_GEE:
+    __all__ += ["run_gee_pipeline", "GEEPipelineConfig", "GEEConfig"]

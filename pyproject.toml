@@ -65,6 +65,10 @@ dev = [
     "mypy>=1.5.0",
     "pre-commit>=3.5.0",
 ]
+gee = [
+    "earthengine-api>=1.4.0",
+    "google-auth>=2.0.0",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/mihiarc/climate-zarr-slr"
