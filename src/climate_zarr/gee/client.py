@@ -115,17 +115,30 @@ def get_county_features(
 
     counties = ee.FeatureCollection(county_asset)
 
-    # Filter by region bounding box
-    region_geometry = ee.Geometry.Rectangle(
-        [region_config.lon_min, region_config.lat_min,
-         region_config.lon_max, region_config.lat_max]
-    )
-    counties = counties.filterBounds(region_geometry)
+    # Use STATEFP filtering instead of filterBounds wherever possible.
+    # GEE's filterBounds duplicates features that straddle spatial-index
+    # tile boundaries (observed for 18 Wisconsin counties) and drops
+    # features whose geometry extends beyond the bbox (6 south FL/TX counties).
+    _REGION_FIPS: dict[str, set[str]] = {
+        "conus": CONUS_STATE_FIPS,
+        "alaska": {"02"},
+        "hawaii": {"15"},
+        "guam": {"66", "69"},
+        "puerto_rico": {"72", "78"},
+    }
 
-    # For CONUS, also filter to only CONUS state FIPS codes to exclude territories
-    if region == "conus":
-        conus_fips_list = ee.List(sorted(CONUS_STATE_FIPS))
-        counties = counties.filter(ee.Filter.inList("STATEFP", conus_fips_list))
+    if region in _REGION_FIPS:
+        fips_set = _REGION_FIPS[region]
+        counties = counties.filter(
+            ee.Filter.inList("STATEFP", ee.List(sorted(fips_set)))
+        )
+    else:
+        # For "global" or unknown regions, fall back to bounding-box filter
+        region_geometry = ee.Geometry.Rectangle(
+            [region_config.lon_min, region_config.lat_min,
+             region_config.lon_max, region_config.lat_max]
+        )
+        counties = counties.filterBounds(region_geometry)
 
     # Map standardized properties onto each feature
     state_fips_dict = ee.Dictionary(STATE_FIPS_TO_ABBR)

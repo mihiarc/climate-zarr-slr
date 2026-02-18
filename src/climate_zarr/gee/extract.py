@@ -224,6 +224,17 @@ def build_variable_dataframe(
 
     combined_dataframe = pd.concat(batch_dataframes, ignore_index=True)
 
+    # Drop duplicate rows that can occur when GEE's filterBounds returns
+    # the same feature multiple times (spatial-index tile boundary artifact).
+    dedup_keys = ["county_id", "year", "scenario"]
+    before_dedup = len(combined_dataframe)
+    combined_dataframe = combined_dataframe.drop_duplicates(subset=dedup_keys)
+    dropped = before_dedup - len(combined_dataframe)
+    if dropped > 0:
+        console.print(
+            f"  [yellow]Dropped {dropped} duplicate rows for {variable}[/yellow]"
+        )
+
     # Rename the 'mean' column that reduceRegions produces for single-band
     # reducers. For multi-band images the band names are preserved.
     if "mean" in combined_dataframe.columns:
@@ -264,6 +275,17 @@ def build_variable_dataframe(
                 .round(0)
                 .astype("Int64")
             )
+
+    # Drop duplicate rows (safety net for a GEE bug where combining
+    # filterBounds with property filters can duplicate features).
+    before_dedup = len(combined_dataframe)
+    dedup_keys = ["county_id", "year", "scenario"]
+    combined_dataframe = combined_dataframe.drop_duplicates(
+        subset=dedup_keys, keep="first"
+    ).reset_index(drop=True)
+    dropped = before_dedup - len(combined_dataframe)
+    if dropped:
+        console.print(f"  [yellow]Dropped {dropped} duplicate rows[/yellow]")
 
     console.print(
         f"[green]{variable}: {len(combined_dataframe)} total rows "
