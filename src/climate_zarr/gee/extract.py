@@ -253,6 +253,18 @@ def build_variable_dataframe(
         combined_dataframe["year"], errors="coerce"
     ).astype("Int64")
 
+    # GEE reduceRegions(mean) returns spatial averages of per-pixel day counts,
+    # so count-based columns come back as floats (e.g. 7.68).  Round them to
+    # integers so transform.py can safely cast to Int64.
+    integer_columns = {"days_above_threshold", "heat_index_days", "cold_days"}
+    for column_name in integer_columns:
+        if column_name in combined_dataframe.columns:
+            combined_dataframe[column_name] = (
+                pd.to_numeric(combined_dataframe[column_name], errors="coerce")
+                .round(0)
+                .astype("Int64")
+            )
+
     console.print(
         f"[green]{variable}: {len(combined_dataframe)} total rows "
         f"({combined_dataframe['county_id'].nunique()} counties, "
