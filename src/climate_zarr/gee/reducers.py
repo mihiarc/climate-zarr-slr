@@ -10,6 +10,54 @@ import ee
 from climate_zarr.gee.client import get_cmip6_collection
 
 
+def _reduce_with_centroid_backfill(
+    image: ee.Image,
+    counties: ee.FeatureCollection,
+    scale: int,
+    check_property: str,
+) -> ee.FeatureCollection:
+    """Run reduceRegions, then backfill null features by sampling at centroid.
+
+    Small counties (e.g. Virginia independent cities) may not contain any
+    pixel centers at the given scale.  For those features, we sample the
+    image at the county centroid buffered by one pixel width so the nearest
+    grid cell value is captured.
+
+    Parameters
+    ----------
+    image : ee.Image
+        The image to reduce (single- or multi-band).
+    counties : ee.FeatureCollection
+        County polygons to reduce over.
+    scale : int
+        Resolution in meters for ``reduceRegions``.
+    check_property : str
+        A property name produced by the reducer to check for null
+        (e.g. ``"total_annual_precip_mm"`` or ``"mean"``).
+    """
+    reduced = image.reduceRegions(
+        collection=counties,
+        reducer=ee.Reducer.mean(),
+        scale=scale,
+    )
+
+    has_data = reduced.filter(ee.Filter.notNull([check_property]))
+    null_data = reduced.filter(ee.Filter.Not(ee.Filter.notNull([check_property])))
+
+    def backfill_at_centroid(feature: ee.Feature) -> ee.Feature:
+        centroid_buffer = feature.geometry().centroid(1).buffer(scale)
+        sampled = image.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=centroid_buffer,
+            scale=scale,
+        )
+        return feature.set(sampled)
+
+    backfilled = null_data.map(backfill_at_centroid)
+
+    return has_data.merge(backfilled)
+
+
 def reduce_precipitation(
     year: int,
     model: str,
@@ -54,10 +102,11 @@ def reduce_precipitation(
         threshold_image.rename("days_above_threshold")
     )
 
-    reduced = combined_image.reduceRegions(
-        collection=counties,
-        reducer=ee.Reducer.mean(),
+    reduced = _reduce_with_centroid_backfill(
+        image=combined_image,
+        counties=counties,
         scale=scale,
+        check_property="total_annual_precip_mm",
     )
 
     # Stamp year and scenario onto every feature
@@ -95,10 +144,11 @@ def reduce_temperature(
 
     annual_mean_image = daily_celsius.mean().rename("mean_annual_temp_c")
 
-    reduced = annual_mean_image.reduceRegions(
-        collection=counties,
-        reducer=ee.Reducer.mean(),
+    reduced = _reduce_with_centroid_backfill(
+        image=annual_mean_image,
+        counties=counties,
         scale=scale,
+        check_property="mean",
     )
 
     reduced = reduced.map(
@@ -145,10 +195,11 @@ def reduce_tasmax(
         heat_days_image.rename("heat_index_days")
     )
 
-    reduced = combined_image.reduceRegions(
-        collection=counties,
-        reducer=ee.Reducer.mean(),
+    reduced = _reduce_with_centroid_backfill(
+        image=combined_image,
+        counties=counties,
         scale=scale,
+        check_property="mean_annual_tasmax_c",
     )
 
     reduced = reduced.map(
@@ -188,10 +239,11 @@ def reduce_tasmin(
         lambda image: image.lt(0).rename("tasmin").copyProperties(image, ["system:time_start"])
     ).sum().rename("cold_days")
 
-    reduced = cold_days_image.reduceRegions(
-        collection=counties,
-        reducer=ee.Reducer.mean(),
+    reduced = _reduce_with_centroid_backfill(
+        image=cold_days_image,
+        counties=counties,
         scale=scale,
+        check_property="mean",
     )
 
     reduced = reduced.map(

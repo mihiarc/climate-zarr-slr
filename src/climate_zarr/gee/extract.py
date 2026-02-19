@@ -6,6 +6,7 @@ existing local pipeline output so ``transform.merge_climate_dataframes``
 works unmodified.
 """
 
+import time
 from typing import Callable
 
 import ee
@@ -39,17 +40,28 @@ VARIABLE_OUTPUT_COLUMNS: dict[str, list[str]] = {
 }
 
 
-def extract_to_dataframe(feature_collection: ee.FeatureCollection) -> pd.DataFrame:
+def extract_to_dataframe(
+    feature_collection: ee.FeatureCollection,
+    max_retries: int = 3,
+    base_delay: float = 30.0,
+) -> pd.DataFrame:
     """Convert a GEE FeatureCollection to a pandas DataFrame.
 
     Calls ``getInfo()`` which transfers data from GEE servers.  The
     caller should keep the FeatureCollection small enough to avoid
     timeouts (~5 min limit for interactive calls).
 
+    Retries with exponential backoff on transient connection errors
+    (e.g. laptop sleep causing ``RemoteDisconnected``).
+
     Parameters
     ----------
     feature_collection : ee.FeatureCollection
         Server-side collection of features with properties.
+    max_retries : int
+        Number of retry attempts on transient failures.
+    base_delay : float
+        Initial delay in seconds before first retry (doubles each attempt).
 
     Returns
     -------
@@ -59,12 +71,26 @@ def extract_to_dataframe(feature_collection: ee.FeatureCollection) -> pd.DataFra
     Raises
     ------
     RuntimeError
-        If the GEE ``getInfo()`` call fails.
+        If the GEE ``getInfo()`` call fails after all retries.
     """
-    try:
-        info = feature_collection.getInfo()
-    except Exception as error:
-        raise RuntimeError(f"GEE getInfo() failed: {error}") from error
+    last_error = None
+    for attempt in range(1 + max_retries):
+        try:
+            info = feature_collection.getInfo()
+            break
+        except Exception as error:
+            last_error = error
+            if attempt < max_retries:
+                delay = base_delay * (2 ** attempt)
+                console.print(
+                    f"  [yellow]getInfo() failed (attempt {attempt + 1}/{1 + max_retries}): "
+                    f"{error} — retrying in {delay:.0f}s[/yellow]"
+                )
+                time.sleep(delay)
+            else:
+                raise RuntimeError(
+                    f"GEE getInfo() failed after {1 + max_retries} attempts: {last_error}"
+                ) from last_error
 
     features = info.get("features", [])
     if not features:
