@@ -69,6 +69,11 @@ gee = [
     "earthengine-api>=1.4.0",
     "google-auth>=2.0.0",
 ]
+gee-gcs = [
+    "earthengine-api>=1.4.0",
+    "google-auth>=2.0.0",
+    "gcsfs>=2024.1.0",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/mihiarc/climate-zarr-slr"

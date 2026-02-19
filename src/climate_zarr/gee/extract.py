@@ -100,6 +100,149 @@ def extract_to_dataframe(
     return pd.DataFrame(rows)
 
 
+def build_feature_collection(
+    variable: str,
+    year: int,
+    model: str,
+    scenario: str,
+    counties: ee.FeatureCollection,
+    collection_id: str = "NASA/GDDP-CMIP6",
+    scale: int = 27830,
+) -> ee.FeatureCollection:
+    """Build a server-side FeatureCollection for one variable/year combo.
+
+    Calls the appropriate reducer function to compute county-level
+    statistics without transferring any data.  The returned collection
+    can be used with ``extract_to_dataframe()`` (sequential path) or
+    passed to ``Export.table.*`` (batch path).
+
+    Parameters
+    ----------
+    variable : str
+        Climate variable name (pr, tas, tasmax, tasmin).
+    year : int
+        Calendar year to process.
+    model, scenario : str
+        CMIP6 model and SSP scenario.
+    counties : ee.FeatureCollection
+        County features (already filtered by region).
+    collection_id : str
+        GEE ImageCollection asset.
+    scale : int
+        Processing resolution in meters.
+
+    Returns
+    -------
+    ee.FeatureCollection
+        Server-side collection with county-level annual statistics.
+    """
+    reducer_function: Callable = VARIABLE_REDUCERS[variable]
+    return reducer_function(
+        year=year,
+        model=model,
+        scenario=scenario,
+        counties=counties,
+        collection_id=collection_id,
+        scale=scale,
+    )
+
+
+def postprocess_variable_dataframe(
+    raw_dataframe: pd.DataFrame,
+    variable: str,
+) -> pd.DataFrame:
+    """Clean, rename, dedup, and coerce a raw GEE DataFrame for one variable.
+
+    Applies all the post-processing that ``build_variable_dataframe``
+    used to do inline:
+
+    - Rename single-band ``mean`` columns
+    - Ensure expected columns exist
+    - Select only expected columns
+    - Coerce year and integer columns
+    - Deduplicate rows
+
+    Parameters
+    ----------
+    raw_dataframe : pd.DataFrame
+        Raw DataFrame from ``extract_to_dataframe()`` or batch read-back.
+    variable : str
+        Climate variable name (determines column schema).
+
+    Returns
+    -------
+    pd.DataFrame
+        Cleaned DataFrame with columns matching
+        ``VARIABLE_OUTPUT_COLUMNS[variable]``.
+    """
+    if raw_dataframe.empty:
+        return pd.DataFrame(columns=VARIABLE_OUTPUT_COLUMNS[variable])
+
+    combined_dataframe = raw_dataframe.copy()
+
+    # Drop duplicate rows that can occur when GEE's filterBounds returns
+    # the same feature multiple times (spatial-index tile boundary artifact).
+    dedup_keys = ["county_id", "year", "scenario"]
+    before_dedup = len(combined_dataframe)
+    combined_dataframe = combined_dataframe.drop_duplicates(subset=dedup_keys)
+    dropped = before_dedup - len(combined_dataframe)
+    if dropped > 0:
+        console.print(
+            f"  [yellow]Dropped {dropped} duplicate rows for {variable}[/yellow]"
+        )
+
+    # Rename the 'mean' column that reduceRegions produces for single-band
+    # reducers. For multi-band images the band names are preserved.
+    if "mean" in combined_dataframe.columns:
+        single_band_renames = {
+            "tas": "mean_annual_temp_c",
+            "tasmin": "cold_days",
+        }
+        if variable in single_band_renames:
+            combined_dataframe = combined_dataframe.rename(
+                columns={"mean": single_band_renames[variable]}
+            )
+
+    # Ensure expected columns exist, filling missing ones with NaN
+    expected_columns = VARIABLE_OUTPUT_COLUMNS[variable]
+    for column_name in expected_columns:
+        if column_name not in combined_dataframe.columns:
+            combined_dataframe[column_name] = None
+
+    # Select only the expected columns (drop GEE-internal properties)
+    combined_dataframe = combined_dataframe[
+        [col for col in expected_columns if col in combined_dataframe.columns]
+    ].copy()
+
+    # Coerce types
+    combined_dataframe["year"] = pd.to_numeric(
+        combined_dataframe["year"], errors="coerce"
+    ).astype("Int64")
+
+    # GEE reduceRegions(mean) returns spatial averages of per-pixel day counts,
+    # so count-based columns come back as floats (e.g. 7.68).  Round them to
+    # integers so transform.py can safely cast to Int64.
+    integer_columns = {"days_above_threshold", "heat_index_days", "cold_days"}
+    for column_name in integer_columns:
+        if column_name in combined_dataframe.columns:
+            combined_dataframe[column_name] = (
+                pd.to_numeric(combined_dataframe[column_name], errors="coerce")
+                .round(0)
+                .astype("Int64")
+            )
+
+    # Final dedup (safety net for GEE spatial-index duplicates).
+    before_dedup = len(combined_dataframe)
+    combined_dataframe = combined_dataframe.drop_duplicates(
+        subset=dedup_keys, keep="first"
+    ).reset_index(drop=True)
+    dropped = before_dedup - len(combined_dataframe)
+    if dropped:
+        console.print(f"  [yellow]Dropped {dropped} duplicate rows[/yellow]")
+
+    return combined_dataframe
+
+
 def process_variable_year_batch(
     variable: str,
     years: list[int],
@@ -134,12 +277,10 @@ def process_variable_year_batch(
     pd.DataFrame
         Rows for every county x year in the batch.
     """
-    reducer_function: Callable = VARIABLE_REDUCERS[variable]
-
-    # Build a merged FeatureCollection for all years in the batch
     year_collections = []
     for year in years:
-        year_feature_collection = reducer_function(
+        year_feature_collection = build_feature_collection(
+            variable=variable,
             year=year,
             model=model,
             scenario=scenario,
@@ -249,69 +390,7 @@ def build_variable_dataframe(
         return pd.DataFrame(columns=VARIABLE_OUTPUT_COLUMNS[variable])
 
     combined_dataframe = pd.concat(batch_dataframes, ignore_index=True)
-
-    # Drop duplicate rows that can occur when GEE's filterBounds returns
-    # the same feature multiple times (spatial-index tile boundary artifact).
-    dedup_keys = ["county_id", "year", "scenario"]
-    before_dedup = len(combined_dataframe)
-    combined_dataframe = combined_dataframe.drop_duplicates(subset=dedup_keys)
-    dropped = before_dedup - len(combined_dataframe)
-    if dropped > 0:
-        console.print(
-            f"  [yellow]Dropped {dropped} duplicate rows for {variable}[/yellow]"
-        )
-
-    # Rename the 'mean' column that reduceRegions produces for single-band
-    # reducers. For multi-band images the band names are preserved.
-    if "mean" in combined_dataframe.columns:
-        # Single-band reducer output -- rename based on variable
-        single_band_renames = {
-            "tas": "mean_annual_temp_c",
-            "tasmin": "cold_days",
-        }
-        if variable in single_band_renames:
-            combined_dataframe = combined_dataframe.rename(
-                columns={"mean": single_band_renames[variable]}
-            )
-
-    # Ensure expected columns exist, filling missing ones with NaN
-    expected_columns = VARIABLE_OUTPUT_COLUMNS[variable]
-    for column_name in expected_columns:
-        if column_name not in combined_dataframe.columns:
-            combined_dataframe[column_name] = None
-
-    # Select only the expected columns (drop GEE-internal properties)
-    combined_dataframe = combined_dataframe[
-        [col for col in expected_columns if col in combined_dataframe.columns]
-    ].copy()
-
-    # Coerce types
-    combined_dataframe["year"] = pd.to_numeric(
-        combined_dataframe["year"], errors="coerce"
-    ).astype("Int64")
-
-    # GEE reduceRegions(mean) returns spatial averages of per-pixel day counts,
-    # so count-based columns come back as floats (e.g. 7.68).  Round them to
-    # integers so transform.py can safely cast to Int64.
-    integer_columns = {"days_above_threshold", "heat_index_days", "cold_days"}
-    for column_name in integer_columns:
-        if column_name in combined_dataframe.columns:
-            combined_dataframe[column_name] = (
-                pd.to_numeric(combined_dataframe[column_name], errors="coerce")
-                .round(0)
-                .astype("Int64")
-            )
-
-    # Drop duplicate rows (safety net for a GEE bug where combining
-    # filterBounds with property filters can duplicate features).
-    before_dedup = len(combined_dataframe)
-    dedup_keys = ["county_id", "year", "scenario"]
-    combined_dataframe = combined_dataframe.drop_duplicates(
-        subset=dedup_keys, keep="first"
-    ).reset_index(drop=True)
-    dropped = before_dedup - len(combined_dataframe)
-    if dropped:
-        console.print(f"  [yellow]Dropped {dropped} duplicate rows[/yellow]")
+    combined_dataframe = postprocess_variable_dataframe(combined_dataframe, variable)
 
     console.print(
         f"[green]{variable}: {len(combined_dataframe)} total rows "

@@ -17,11 +17,13 @@ Usage::
     result = run_gee_pipeline(config)
 """
 
-from climate_zarr.gee.config import GEEConfig, GEEPipelineConfig
-from climate_zarr.gee.pipeline import run_gee_pipeline
+from climate_zarr.gee.config import ExportBackend, GEEConfig, GEEPipelineConfig
+from climate_zarr.gee.pipeline import run_gee_pipeline, run_gee_pipeline_batch
 
 __all__ = [
+    "ExportBackend",
     "GEEConfig",
     "GEEPipelineConfig",
     "run_gee_pipeline",
+    "run_gee_pipeline_batch",
 ]

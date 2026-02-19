@@ -1,5 +1,6 @@
 """Pydantic v2 configuration models for the Google Earth Engine pipeline."""
 
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -8,6 +9,13 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from climate_zarr.climate_config import get_config
 
 SUPPORTED_VARIABLES = ("pr", "tas", "tasmax", "tasmin")
+
+
+class ExportBackend(str, Enum):
+    """Where GEE batch export tasks write their results."""
+
+    ASSET = "asset"
+    GCS = "gcs"
 
 
 class GEEConfig(BaseModel):
@@ -32,6 +40,36 @@ class GEEConfig(BaseModel):
         le=20,
         description="Years per GEE getInfo() call (CONUS ~3,100 counties × batch_size must stay under 5,000)",
     )
+    export_backend: ExportBackend = Field(
+        default=ExportBackend.ASSET,
+        description="Backend for batch exports: 'asset' (default, free tier) or 'gcs' (requires bucket)",
+    )
+    asset_folder: str = Field(
+        default="climate_zarr_tmp",
+        description="Folder name under projects/{project_id}/assets/ for temporary export assets",
+    )
+    gcs_bucket: Optional[str] = Field(
+        default=None,
+        description="GCS bucket name for 'gcs' export backend (required when export_backend='gcs')",
+    )
+    gcs_prefix: str = Field(
+        default="climate_zarr_tmp",
+        description="GCS key prefix for temporary export CSVs",
+    )
+    poll_interval_seconds: int = Field(
+        default=30,
+        ge=5,
+        le=300,
+        description="Seconds between polling GEE task status during batch export",
+    )
+
+    @model_validator(mode="after")
+    def validate_gcs_backend(self) -> "GEEConfig":
+        if self.export_backend == ExportBackend.GCS and not self.gcs_bucket:
+            raise ValueError(
+                "gcs_bucket is required when export_backend='gcs'"
+            )
+        return self
 
 
 class GEEPipelineConfig(BaseModel):
@@ -65,6 +103,14 @@ class GEEPipelineConfig(BaseModel):
     output_file: Optional[Path] = Field(
         default=None,
         description="Final CSV path; defaults to {output_dir}/gee/{region}_{scenario}_climate_stats.csv",
+    )
+    use_batch_export: bool = Field(
+        default=False,
+        description="Use GEE batch export tasks instead of sequential getInfo() calls",
+    )
+    skip_cleanup: bool = Field(
+        default=False,
+        description="Skip cleanup of temporary export assets/files (useful for debugging)",
     )
 
     @field_validator("region")
