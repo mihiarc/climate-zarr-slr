@@ -193,15 +193,25 @@ def postprocess_variable_dataframe(
 
     # Rename the 'mean' column that reduceRegions produces for single-band
     # reducers. For multi-band images the band names are preserved.
+    # Asset exports may contain BOTH the band-named column (from centroid
+    # backfill via reduceRegion) and 'mean' (from reduceRegions).  Merge
+    # them: prefer the band-named column where non-null, fall back to 'mean'.
     if "mean" in combined_dataframe.columns:
         single_band_renames = {
             "tas": "mean_annual_temp_c",
             "tasmin": "cold_days",
         }
         if variable in single_band_renames:
-            combined_dataframe = combined_dataframe.rename(
-                columns={"mean": single_band_renames[variable]}
-            )
+            target_col = single_band_renames[variable]
+            if target_col in combined_dataframe.columns:
+                combined_dataframe[target_col] = combined_dataframe[target_col].fillna(
+                    combined_dataframe["mean"]
+                )
+                combined_dataframe = combined_dataframe.drop(columns=["mean"])
+            else:
+                combined_dataframe = combined_dataframe.rename(
+                    columns={"mean": target_col}
+                )
 
     # Ensure expected columns exist, filling missing ones with NaN
     expected_columns = VARIABLE_OUTPUT_COLUMNS[variable]
